@@ -1,0 +1,207 @@
+﻿<Window x:Class="StanleyReports.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StanleyReports"
+        xmlns:SciChart="http://schemas.abtsoftware.co.uk/scichart"
+        Title="Stanley Reports" Width="1024" Height="768">
+    <Window.Resources>
+        <Style TargetType="{x:Type DatePickerTextBox}">
+            <Setter Property="IsReadOnly" Value="True" />
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <GroupBox Header="Global Settings" Margin="5">
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <DatePicker Margin="10" Name="startDate"/>
+                <DatePicker Margin="10" Name="endDate"/>
+            </StackPanel>
+        </GroupBox>
+        <TabControl Grid.Row="1" Margin="5">
+            <TabItem Header="Statistics">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <GroupBox Grid.Row="0" Header="Report Settings">
+                    <StackPanel Orientation="Horizontal">
+                            <CheckBox Name="chkExcludeFirst" Margin="10" IsChecked="True">Exclude First</CheckBox>
+                            <CheckBox Name="chkExcludeLast" Margin="10" IsChecked="True">Exclude Last</CheckBox>
+                        </StackPanel>
+                    </GroupBox>
+                    <Grid Grid.Row="1"> <!--Statistics "table"-->
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.Resources>
+                        <Style x:Key="statsStyle1" TargetType="TextBlock">
+                            <Setter Property="Margin" Value="10,10,10,0" />
+                            <Setter Property="TextAlignment" Value="Right" />
+                        </Style>    
+                        <Style x:Key="statsStyle2" TargetType="TextBlock">
+                            <Setter Property="Margin" Value="10,10,10,0" />
+                            <Setter Property="TextAlignment" Value="Left" />
+                        </Style>    
+                        <Style x:Key="statsStyle3" TargetType="TextBlock">
+                            <Setter Property="Margin" Value="10,10,10,0" />
+                            <Setter Property="TextAlignment" Value="Center" />
+                        </Style>    
+                    </Grid.Resources>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource statsStyle1}">Data starts on:</TextBlock>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource statsStyle1}">Data ends on:</TextBlock>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource statsStyle1}">Total entries:</TextBlock>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource statsStyle1}">Number of people:</TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Name="txtDataStartsOn" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Name="txtDataEndsOn" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4" Name="txtTotalEntries" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" Name="txtUniqueEntries" Style="{StaticResource statsStyle2}" />
+                    
+                    <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource statsStyle2}">Min</TextBlock>
+                    <TextBlock Grid.Row="5" Grid.Column="2" Style="{StaticResource statsStyle2}">Max</TextBlock>
+                    <TextBlock Grid.Row="5" Grid.Column="3" Style="{StaticResource statsStyle2}">Ave</TextBlock>
+                    <TextBlock Grid.Row="5" Grid.Column="4" Style="{StaticResource statsStyle2}">Periods</TextBlock>
+                        
+                    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource statsStyle1}">Total entries/day:</TextBlock>
+                    <TextBlock Grid.Row="6" Grid.Column="1" Name="txtTotalPerDayMin" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="6" Grid.Column="2" Name="txtTotalPerDayMax" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="6" Grid.Column="3" Name="txtTotalPerDaySum" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="6" Grid.Column="4" Name="txtTotalDayPeriods" Style="{StaticResource statsStyle2}" />
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource statsStyle1}">Total entries/week:</TextBlock>
+                    <TextBlock Grid.Row="7" Grid.Column="1" Name="txtTotalPerWeekMin" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="7" Grid.Column="2" Name="txtTotalPerWeekMax" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="7" Grid.Column="3" Name="txtTotalPerWeekSum" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="7" Grid.Column="4" Name="txtTotalWeekPeriods" Style="{StaticResource statsStyle2}" />
+
+                        <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource statsStyle1}">Total entries/month:</TextBlock>
+                    <TextBlock Grid.Row="8" Grid.Column="1" Name="txtTotalPerMonthMin" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="8" Grid.Column="2" Name="txtTotalPerMonthMax" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="8" Grid.Column="3" Name="txtTotalPerMonthSum" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="8" Grid.Column="4" Name="txtTotalMonthPeriods" Style="{StaticResource statsStyle2}" />
+
+                    <TextBlock Grid.Row="10" Grid.Column="1" Style="{StaticResource statsStyle2}">Min</TextBlock>
+                    <TextBlock Grid.Row="10" Grid.Column="2" Style="{StaticResource statsStyle2}">Max</TextBlock>
+                    <TextBlock Grid.Row="10" Grid.Column="3" Style="{StaticResource statsStyle2}">Ave</TextBlock>
+                    <TextBlock Grid.Row="10" Grid.Column="4" Style="{StaticResource statsStyle2}">Periods</TextBlock>
+                        
+                    <TextBlock Grid.Row="11" Grid.Column="0" Style="{StaticResource statsStyle1}">Unique Entries/day:</TextBlock>
+                    <TextBlock Grid.Row="11" Grid.Column="1" Name="txtUniquePerDayMin" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="11" Grid.Column="2" Name="txtUniquePerDayMax" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="11" Grid.Column="3" Name="txtUniquePerDaySum" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="11" Grid.Column="4" Name="txtUniqueDayPeriods" Style="{StaticResource statsStyle2}" />
+                    
+                    <TextBlock Grid.Row="12" Grid.Column="0" Style="{StaticResource statsStyle1}">Unique Entries/week:</TextBlock>
+                    <TextBlock Grid.Row="12" Grid.Column="1" Name="txtUniquePerWeekMin" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="12" Grid.Column="2" Name="txtUniquePerWeekMax" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="12" Grid.Column="3" Name="txtUniquePerWeekSum" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="12" Grid.Column="4" Name="txtUniqueWeekPeriods" Style="{StaticResource statsStyle2}" />
+                        
+                    <TextBlock Grid.Row="13" Grid.Column="0" Style="{StaticResource statsStyle1}">Unique Entries/month:</TextBlock>
+                    <TextBlock Grid.Row="13" Grid.Column="1" Name="txtUniquePerMonthMin" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="13" Grid.Column="2" Name="txtUniquePerMonthMax" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="13" Grid.Column="3" Name="txtUniquePerMonthSum" Style="{StaticResource statsStyle2}" />
+                    <TextBlock Grid.Row="13" Grid.Column="4" Name="txtUniqueMonthPeriods" Style="{StaticResource statsStyle2}" />
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Entry Distribution">
+                <Grid>
+                    <SciChart:SciChartSurface x:Name="entryDistributionChart" Loaded="DisplayEntryDistribution" Grid.Row="1" SciChart:ThemeManager.Theme="Chrome">
+                        
+                        <!-- Define RenderableSeries -->
+                        <SciChart:SciChartSurface.RenderableSeries>
+                            <SciChart:FastColumnRenderableSeries x:Name="distributionRenderableSeries" />
+                        </SciChart:SciChartSurface.RenderableSeries>
+
+                        <!--  Create an X Axis -->
+                        <SciChart:SciChartSurface.XAxis>
+                            <SciChart:NumericAxis AxisTitle="Number of Entries" />
+                        </SciChart:SciChartSurface.XAxis>
+
+                        <!--  Create a Y Axis -->
+                        <SciChart:SciChartSurface.YAxes>
+                            <SciChart:NumericAxis AxisAlignment="Left" AxisTitle="Number of Members" />
+                        </SciChart:SciChartSurface.YAxes>
+
+                        <!--  ChartModifiers to add interactivity  -->
+                        <SciChart:SciChartSurface.ChartModifier>
+                            <SciChart:ModifierGroup>
+                                <SciChart:RubberBandXyZoomModifier />
+                                <SciChart:ZoomExtentsModifier />
+                                <SciChart:MouseWheelZoomModifier/>
+                                <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents"/>
+                                <SciChart:YAxisDragModifier />
+                                <SciChart:CursorModifier />
+                            </SciChart:ModifierGroup>
+                        </SciChart:SciChartSurface.ChartModifier>
+
+                    </SciChart:SciChartSurface>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Entries By Day">
+                <Grid>
+                    <SciChart:SciChartSurface x:Name="entriesByDayChart" Loaded="DisplayEntriesByDay" Grid.Row="1" SciChart:ThemeManager.Theme="Chrome">
+
+                        <!-- Define RenderableSeries -->
+                        <SciChart:SciChartSurface.RenderableSeries>
+                            <SciChart:FastColumnRenderableSeries x:Name="entriesByDayRenderableSeries" />
+                        </SciChart:SciChartSurface.RenderableSeries>
+
+                        <!--  Create an X Axis -->
+                        <SciChart:SciChartSurface.XAxis>
+                            <SciChart:TimeSpanAxis AxisTitle="Time of Day" />
+                        </SciChart:SciChartSurface.XAxis>
+
+                        <!--  Create a Y Axis -->
+                        <SciChart:SciChartSurface.YAxes>
+                            <SciChart:NumericAxis AxisAlignment="Left" AxisTitle="Number of Entries" />
+                        </SciChart:SciChartSurface.YAxes>
+
+                        <!--  ChartModifiers to add interactivity  -->
+                        <SciChart:SciChartSurface.ChartModifier>
+                            <SciChart:ModifierGroup>
+                                <SciChart:RubberBandXyZoomModifier />
+                                <SciChart:ZoomExtentsModifier />
+                                <SciChart:MouseWheelZoomModifier />
+                                <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents" />
+                                <SciChart:YAxisDragModifier />
+                                <SciChart:CursorModifier />
+                            </SciChart:ModifierGroup>
+                        </SciChart:SciChartSurface.ChartModifier>
+
+                    </SciChart:SciChartSurface>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+    </Grid>
+</Window>
