@@ -381,11 +381,8 @@ namespace StanleyReports
                             let percentile = GetTimeSpan(entry, windowTicks)
                             group new { entry.KeyholderID } by percentile into timeSpanGroup
                             orderby timeSpanGroup.Key
-                            //select new KeyValuePair<TimeSpan, int>(timeSpanGroup.Key, timeSpanGroup.Count()); // { Name = timeSpanGroup.Key, Data = timeSpanGroup.Count() }; //timeSpanGroup; // new KeyValuePair<TimeSpan,int>(timeSpanGroup.Key, timeSpanGroup.Count<>());
                             select new { Name = timeSpanGroup.Key, Data = timeSpanGroup.Count() })
                             .ToDictionary(z => z.Name, z => z.Data); // { Name = timeSpanGroup.Key, Data = timeSpanGroup.Count() }; //timeSpanGroup; // new KeyValuePair<TimeSpan,int>(timeSpanGroup.Key, timeSpanGroup.Count<>());
-
-            //var d = (from z in groupedInDay select z).ToDictionary(z => z.Name, z => z.Data);
 
             // Create a dictionary that has all time windows as keys and count or zero as value
             Dictionary < TimeSpan, int> entryGroups = new Dictionary<TimeSpan, int>();
