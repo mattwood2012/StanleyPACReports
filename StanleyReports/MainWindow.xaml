@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:StanleyReports"
         xmlns:SciChart="http://schemas.abtsoftware.co.uk/scichart"
         Title="Stanley Reports" Width="1024" Height="768">
@@ -16,26 +17,41 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <GroupBox Header="Global Settings" Margin="5">
-            <StackPanel Grid.Row="0" Orientation="Horizontal">
-                <DatePicker Margin="10" Name="startDate"/>
-                <DatePicker Margin="10" Name="endDate"/>
-            </StackPanel>
-        </GroupBox>
+        <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Header="Global Settings" Margin="5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <GroupBox Header="Report Settings" Margin="5">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <DatePicker Margin="10" Name="startDate" SelectedDateChanged="GlobalSettingChanged" />
+                        <DatePicker Margin="10" Name="endDate" SelectedDateChanged="GlobalSettingChanged" />
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Grid.Column="1" Header="Chart Settings" Margin="5">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ComboBox Margin="10" x:Name="cboTheme" MinWidth="140"/>
+                    </StackPanel>
+                </GroupBox>
+            </Grid>
+            </Expander>
         <TabControl Grid.Row="1" Margin="5">
             <TabItem Header="Statistics">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <GroupBox Grid.Row="0" Header="Report Settings">
+                    <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Grid.Row="0" Header="Report Settings">
                     <StackPanel Orientation="Horizontal">
-                            <CheckBox Name="chkExcludeFirst" Margin="10" IsChecked="True">Exclude First</CheckBox>
-                            <CheckBox Name="chkExcludeLast" Margin="10" IsChecked="True">Exclude Last</CheckBox>
+                            <CheckBox Name="chkExcludeFirst" Margin="10" IsChecked="True">Exclude First Period</CheckBox>
+                            <CheckBox Name="chkExcludeLast" Margin="10" IsChecked="True">Exclude Last Period</CheckBox>
                         </StackPanel>
-                    </GroupBox>
-                    <Grid Grid.Row="1"> <!--Statistics "table"-->
+                    </Expander>
+                    <TextBlock Name="StatisticsMissingDataText" Grid.Row="2" Margin="10" FontSize="22">No data for the chosen settings</TextBlock>
+                    <Grid Name="StatisticsGrid" Grid.Row="1"> <!--Statistics "table"-->
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -135,7 +151,7 @@
             </TabItem>
             <TabItem Header="Entry Distribution">
                 <Grid>
-                    <SciChart:SciChartSurface x:Name="entryDistributionChart" Loaded="DisplayEntryDistribution" Grid.Row="1" SciChart:ThemeManager.Theme="Chrome">
+                    <SciChart:SciChartSurface x:Name="entryDistributionChart" Loaded="DisplayEntryDistribution" Grid.Row="1"  SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
                         
                         <!-- Define RenderableSeries -->
                         <SciChart:SciChartSurface.RenderableSeries>
@@ -144,12 +160,12 @@
 
                         <!--  Create an X Axis -->
                         <SciChart:SciChartSurface.XAxis>
-                            <SciChart:NumericAxis AxisTitle="Number of Entries" />
+                            <SciChart:NumericAxis CursorTextFormatting="0" AxisTitle="Number of Entries" />
                         </SciChart:SciChartSurface.XAxis>
 
                         <!--  Create a Y Axis -->
                         <SciChart:SciChartSurface.YAxes>
-                            <SciChart:NumericAxis AxisAlignment="Left" AxisTitle="Number of Members" />
+                            <SciChart:NumericAxis AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Members" />
                         </SciChart:SciChartSurface.YAxes>
 
                         <!--  ChartModifiers to add interactivity  -->
@@ -169,7 +185,24 @@
             </TabItem>
             <TabItem Header="Entries By Day">
                 <Grid>
-                    <SciChart:SciChartSurface x:Name="entriesByDayChart" Loaded="DisplayEntriesByDay" Grid.Row="1" SciChart:ThemeManager.Theme="Chrome">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Grid.Row="0" Header="Report Settings">
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox Name="entriesByDayWindow" Margin="10" SelectionChanged="DisplayEntriesByDay">
+                                <ComboBoxItem>5 Minutes</ComboBoxItem>
+                                <ComboBoxItem>10 Minutes</ComboBoxItem>
+                                <ComboBoxItem>15 Minutes</ComboBoxItem>
+                                <ComboBoxItem>30 Minutes</ComboBoxItem>
+                                <ComboBoxItem IsSelected="True">1 Hour</ComboBoxItem>
+                                <ComboBoxItem>2 Hours</ComboBoxItem>
+                                <ComboBoxItem>4 Hours</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </Expander>
+                    <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByDayChart" Loaded="DisplayEntriesByDay" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
 
                         <!-- Define RenderableSeries -->
                         <SciChart:SciChartSurface.RenderableSeries>
@@ -183,7 +216,115 @@
 
                         <!--  Create a Y Axis -->
                         <SciChart:SciChartSurface.YAxes>
-                            <SciChart:NumericAxis AxisAlignment="Left" AxisTitle="Number of Entries" />
+                            <SciChart:NumericAxis AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Entries" />
+                        </SciChart:SciChartSurface.YAxes>
+
+                        <!--  ChartModifiers to add interactivity  -->
+                        <SciChart:SciChartSurface.ChartModifier>
+                            <SciChart:ModifierGroup>
+                                <SciChart:RubberBandXyZoomModifier />
+                                <SciChart:ZoomExtentsModifier />
+                                <SciChart:MouseWheelZoomModifier />
+                                <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents" />
+                                <SciChart:YAxisDragModifier />
+                                <SciChart:CursorModifier />
+                            </SciChart:ModifierGroup>
+                        </SciChart:SciChartSurface.ChartModifier>
+
+                    </SciChart:SciChartSurface>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Entries By Week">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Grid.Row="0" Header="Report Settings">
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox Name="entriesByWeekWindow" Margin="10" SelectionChanged="DisplayEntriesByWeek">
+                                <ComboBoxItem>5 Minutes</ComboBoxItem>
+                                <ComboBoxItem>10 Minutes</ComboBoxItem>
+                                <ComboBoxItem>15 Minutes</ComboBoxItem>
+                                <ComboBoxItem>30 Minutes</ComboBoxItem>
+                                <ComboBoxItem IsSelected="True">1 Hour</ComboBoxItem>
+                                <ComboBoxItem>2 Hours</ComboBoxItem>
+                                <ComboBoxItem>4 Hours</ComboBoxItem>
+                                <ComboBoxItem>8 Hours</ComboBoxItem>
+                                <ComboBoxItem>24 Hours</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </Expander>
+                    <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByWeekChart" Loaded="DisplayEntriesByWeek" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
+
+                        <!-- Define RenderableSeries -->
+                        <SciChart:SciChartSurface.RenderableSeries>
+                            <SciChart:FastColumnRenderableSeries x:Name="entriesByWeekRenderableSeries" />
+                        </SciChart:SciChartSurface.RenderableSeries>
+
+                        <!--  Create an X Axis -->
+                        <SciChart:SciChartSurface.XAxis>
+                            <SciChart:DateTimeAxis TextFormatting="ddd" SubDayTextFormatting="HH:mm" CursorTextFormatting="ddd HH:mm" AxisTitle="Day of Week" />
+                        </SciChart:SciChartSurface.XAxis>
+
+                        <!--  Create a Y Axis -->
+                        <SciChart:SciChartSurface.YAxes>
+                            <SciChart:NumericAxis AxisAlignment="Left" AxisTitle="Number of Entries" CursorTextFormatting="0" />
+                        </SciChart:SciChartSurface.YAxes>
+
+                        <!--  ChartModifiers to add interactivity  -->
+                        <SciChart:SciChartSurface.ChartModifier>
+                            <SciChart:ModifierGroup>
+                                <SciChart:RubberBandXyZoomModifier />
+                                <SciChart:ZoomExtentsModifier />
+                                <SciChart:MouseWheelZoomModifier />
+                                <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents" />
+                                <SciChart:YAxisDragModifier />
+                                <SciChart:CursorModifier />
+                            </SciChart:ModifierGroup>
+                        </SciChart:SciChartSurface.ChartModifier>
+
+                    </SciChart:SciChartSurface>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Entries By Month">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Grid.Row="0" Header="Report Settings">
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox Name="entriesByMonthWindow" Margin="10" SelectionChanged="DisplayEntriesByMonth">
+                                <ComboBoxItem>5 Minutes</ComboBoxItem>
+                                <ComboBoxItem>10 Minutes</ComboBoxItem>
+                                <ComboBoxItem>15 Minutes</ComboBoxItem>
+                                <ComboBoxItem>30 Minutes</ComboBoxItem>
+                                <ComboBoxItem IsSelected="True">1 Hour</ComboBoxItem>
+                                <ComboBoxItem>2 Hours</ComboBoxItem>
+                                <ComboBoxItem>4 Hours</ComboBoxItem>
+                                <ComboBoxItem>8 Hours</ComboBoxItem>
+                                <ComboBoxItem>24 Hours</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </Expander>
+                    <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByMonthChart" Loaded="DisplayEntriesByMonth" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
+
+                        <!-- Define RenderableSeries -->
+                        <SciChart:SciChartSurface.RenderableSeries>
+                            <SciChart:FastColumnRenderableSeries x:Name="entriesByMonthRenderableSeries" />
+                        </SciChart:SciChartSurface.RenderableSeries>
+
+                        <!--  Create an X Axis -->
+                        <SciChart:SciChartSurface.XAxis>
+                            <SciChart:DateTimeAxis TextFormatting="dd" SubDayTextFormatting="HH:mm" CursorTextFormatting="d HH:mm" AxisTitle="Day of Month" />
+                            <!--<SciChart:TimeSpanAxis CursorTextFormatting="dd HH:mm" AxisTitle="Day of Month" />-->
+                        </SciChart:SciChartSurface.XAxis>
+                            <!--<SciChart:TimeSpanAxis TextFormatting="d" CursorTextFormatting="HH:mm" AxisTitle="Day of Month" />-->
+
+                        <!--  Create a Y Axis -->
+                        <SciChart:SciChartSurface.YAxes>
+                            <SciChart:NumericAxis AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Entries" />
                         </SciChart:SciChartSurface.YAxes>
 
                         <!--  ChartModifiers to add interactivity  -->
