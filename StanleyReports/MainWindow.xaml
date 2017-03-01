@@ -23,20 +23,32 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <GroupBox Header="Report Settings" Margin="5">
+                <GroupBox Header="All Reports" Margin="5">
                     <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Margin="5,13,0,0" Text="Start Date:" />
                         <DatePicker Margin="10" Name="startDate" SelectedDateChanged="GlobalSettingChanged" />
+                        <TextBlock Margin="5,13,0,0" Text="End Date:" />
                         <DatePicker Margin="10" Name="endDate" SelectedDateChanged="GlobalSettingChanged" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Grid.Column="1" Header="Chart Settings" Margin="5">
+                <GroupBox Grid.Column="1" Header="All Charts" Margin="5">
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <TextBlock Margin="5,13,0,0" Text="Theme:" />
                         <ComboBox Margin="10" x:Name="cboTheme" MinWidth="140"/>
+                        <!--<StackPanel Margin="0,6,4,2">
+                            <CheckBox Name="chkXMajorLines" IsChecked="True" IsThreeState="False">X Major Lines</CheckBox>
+                            --><!--<CheckBox Name="chkXMajorLines" IsChecked="True" IsThreeState="False" Unchecked="XMajorLines_Unchecked" Checked="XMajorLines_Checked">X Major Lines</CheckBox>--><!--
+                            <CheckBox Name="XMinorLines">X Minor Lines</CheckBox>
+                        </StackPanel>
+                        <StackPanel Margin="2,6,4,0">
+                            <CheckBox Name="YMajorLines">Y Major Lines</CheckBox>
+                            <CheckBox Name="YMinorLines">Y Minor Lines</CheckBox>
+                        </StackPanel>-->
                     </StackPanel>
                 </GroupBox>
             </Grid>
             </Expander>
-        <TabControl Grid.Row="1" Margin="5">
+        <TabControl Name="ReportsTabControl" Grid.Row="1" Margin="5">
             <TabItem Header="Statistics">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -165,7 +177,7 @@
 
                         <!--  Create a Y Axis -->
                         <SciChart:SciChartSurface.YAxes>
-                            <SciChart:NumericAxis AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Members" />
+                            <SciChart:NumericAxis Name="EntryDistribYAxis" AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Members" />
                         </SciChart:SciChartSurface.YAxes>
 
                         <!--  ChartModifiers to add interactivity  -->

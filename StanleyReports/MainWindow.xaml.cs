@@ -554,6 +554,8 @@ namespace StanleyReports
 
         private void InitializeGUI(DateTime dataStartDate, DateTime dataEndDate)
         {
+            DataContext = this;
+
             // Global
             startDate.DisplayDateStart = dataStartDate;
             startDate.DisplayDateEnd = dataEndDate;
@@ -624,14 +626,6 @@ namespace StanleyReports
                 dictionary.Remove(dictionary.Keys.First());
         }
 
-        private void GlobalSettingChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!IsLoaded) return;
-
-            entries = ApplyGlobalFilters(allEntries);
-            DisplayStatistics();
-        }
-
         private TimeSpan GetBinTimeSpan (ComboBox cbo)
         {
             int windowMinutes;
@@ -651,6 +645,44 @@ namespace StanleyReports
         #endregion
 
         #region Code behind - I know, make it binding - will do once features have been defined
+
+        private void GlobalSettingChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!IsLoaded) return;
+
+            entries = ApplyGlobalFilters(allEntries);
+
+            switch (ReportsTabControl.SelectedIndex)
+            {
+                case 0:
+                    DisplayStatistics();
+                    break;
+                case 1:
+                    DisplayEntryDistribution(null, null);
+                    break;
+                case 2:
+                    DisplayEntriesByDay(null, null);
+                    break;
+                case 3:
+                    DisplayEntriesByWeek(null, null);
+                    break;
+                case 4:
+                    DisplayEntriesByMonth(null, null);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        //private void XMajorLines_Checked(object sender, RoutedEventArgs e)
+        //{
+        //    if (IsLoaded) EntryDistribYAxis.DrawMajorGridLines = true;
+        //}
+
+        //private void XMajorLines_Unchecked(object sender, RoutedEventArgs e)
+        //{
+        //    if (IsLoaded) EntryDistribYAxis.DrawMajorGridLines = false;
+        //}
 
         //private void entriesByDayWindow_SelectionChanged(object sender, SelectionChangedEventArgs e)
         //{
