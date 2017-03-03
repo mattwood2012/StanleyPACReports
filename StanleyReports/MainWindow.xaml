@@ -20,7 +20,7 @@
         <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Header="Global Settings" Margin="5">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <GroupBox Header="All Reports" Margin="5">
@@ -29,6 +29,8 @@
                         <DatePicker Margin="10" Name="startDate" SelectedDateChanged="GlobalSettingChanged" />
                         <TextBlock Margin="5,13,0,0" Text="End Date:" />
                         <DatePicker Margin="10" Name="endDate" SelectedDateChanged="GlobalSettingChanged" />
+                        <TextBlock Margin="5,13,0,0" Text="Door:" />
+                        <ComboBox Margin="10" x:Name="cboDoor" SelectionChanged="GlobalSettingChanged" MinWidth="140"/>
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Grid.Column="1" Header="All Charts" Margin="5">
@@ -58,8 +60,8 @@
                     </Grid.RowDefinitions>
                     <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Grid.Row="0" Header="Report Settings">
                     <StackPanel Orientation="Horizontal">
-                            <CheckBox Name="chkExcludeFirst" Margin="10" IsChecked="True">Exclude First Period</CheckBox>
-                            <CheckBox Name="chkExcludeLast" Margin="10" IsChecked="True">Exclude Last Period</CheckBox>
+                            <CheckBox Name="chkExcludeFirst" Margin="10" IsChecked="True" Click="DisplayStatistics">Exclude First Period</CheckBox>
+                            <CheckBox Name="chkExcludeLast" Margin="10" IsChecked="True" Click="DisplayStatistics">Exclude Last Period</CheckBox>
                         </StackPanel>
                     </Expander>
                     <TextBlock Name="StatisticsMissingDataText" Grid.Row="2" Margin="10" FontSize="22">No data for the chosen settings</TextBlock>
@@ -161,40 +163,6 @@
                     </Grid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Entry Distribution">
-                <Grid>
-                    <SciChart:SciChartSurface x:Name="entryDistributionChart" Loaded="DisplayEntryDistribution" Grid.Row="1"  SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
-                        
-                        <!-- Define RenderableSeries -->
-                        <SciChart:SciChartSurface.RenderableSeries>
-                            <SciChart:FastColumnRenderableSeries x:Name="distributionRenderableSeries" />
-                        </SciChart:SciChartSurface.RenderableSeries>
-
-                        <!--  Create an X Axis -->
-                        <SciChart:SciChartSurface.XAxis>
-                            <SciChart:NumericAxis CursorTextFormatting="0" AxisTitle="Number of Entries" />
-                        </SciChart:SciChartSurface.XAxis>
-
-                        <!--  Create a Y Axis -->
-                        <SciChart:SciChartSurface.YAxes>
-                            <SciChart:NumericAxis Name="EntryDistribYAxis" AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Members" />
-                        </SciChart:SciChartSurface.YAxes>
-
-                        <!--  ChartModifiers to add interactivity  -->
-                        <SciChart:SciChartSurface.ChartModifier>
-                            <SciChart:ModifierGroup>
-                                <SciChart:RubberBandXyZoomModifier />
-                                <SciChart:ZoomExtentsModifier />
-                                <SciChart:MouseWheelZoomModifier/>
-                                <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents"/>
-                                <SciChart:YAxisDragModifier />
-                                <SciChart:CursorModifier />
-                            </SciChart:ModifierGroup>
-                        </SciChart:SciChartSurface.ChartModifier>
-
-                    </SciChart:SciChartSurface>
-                </Grid>
-            </TabItem>
             <TabItem Header="Entries By Day">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -212,6 +180,7 @@
                                 <ComboBoxItem>2 Hours</ComboBoxItem>
                                 <ComboBoxItem>4 Hours</ComboBoxItem>
                             </ComboBox>
+                            <CheckBox Name="entriesByDayShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByDay">Average</CheckBox>
                         </StackPanel>
                     </Expander>
                     <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByDayChart" Loaded="DisplayEntriesByDay" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
@@ -265,6 +234,7 @@
                                 <ComboBoxItem>8 Hours</ComboBoxItem>
                                 <ComboBoxItem>24 Hours</ComboBoxItem>
                             </ComboBox>
+                            <CheckBox Name="entriesByWeekShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByDay">Average</CheckBox>
                         </StackPanel>
                     </Expander>
                     <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByWeekChart" Loaded="DisplayEntriesByWeek" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
@@ -317,6 +287,7 @@
                                 <ComboBoxItem>4 Hours</ComboBoxItem>
                                 <ComboBoxItem>8 Hours</ComboBoxItem>
                                 <ComboBoxItem>24 Hours</ComboBoxItem>
+                                <CheckBox Name="entriesByMonthShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByDay">Average</CheckBox>
                             </ComboBox>
                         </StackPanel>
                     </Expander>
@@ -346,6 +317,40 @@
                                 <SciChart:ZoomExtentsModifier />
                                 <SciChart:MouseWheelZoomModifier />
                                 <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents" />
+                                <SciChart:YAxisDragModifier />
+                                <SciChart:CursorModifier />
+                            </SciChart:ModifierGroup>
+                        </SciChart:SciChartSurface.ChartModifier>
+
+                    </SciChart:SciChartSurface>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Entry Distribution">
+                <Grid>
+                    <SciChart:SciChartSurface x:Name="entryDistributionChart" Loaded="DisplayEntryDistribution" Grid.Row="1"  SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
+                        
+                        <!-- Define RenderableSeries -->
+                        <SciChart:SciChartSurface.RenderableSeries>
+                            <SciChart:FastColumnRenderableSeries x:Name="distributionRenderableSeries" />
+                        </SciChart:SciChartSurface.RenderableSeries>
+
+                        <!--  Create an X Axis -->
+                        <SciChart:SciChartSurface.XAxis>
+                            <SciChart:NumericAxis CursorTextFormatting="0" AxisTitle="Number of Entries" />
+                        </SciChart:SciChartSurface.XAxis>
+
+                        <!--  Create a Y Axis -->
+                        <SciChart:SciChartSurface.YAxes>
+                            <SciChart:NumericAxis Name="EntryDistribYAxis" AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Members" />
+                        </SciChart:SciChartSurface.YAxes>
+
+                        <!--  ChartModifiers to add interactivity  -->
+                        <SciChart:SciChartSurface.ChartModifier>
+                            <SciChart:ModifierGroup>
+                                <SciChart:RubberBandXyZoomModifier />
+                                <SciChart:ZoomExtentsModifier />
+                                <SciChart:MouseWheelZoomModifier/>
+                                <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents"/>
                                 <SciChart:YAxisDragModifier />
                                 <SciChart:CursorModifier />
                             </SciChart:ModifierGroup>

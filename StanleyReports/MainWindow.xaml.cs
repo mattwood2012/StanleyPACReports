@@ -24,6 +24,7 @@ namespace StanleyReports
     {
         List<Entry> allEntries;
         List<Entry> entries;
+        string[] doors;
         DateTime dataStartDate, dataEndDate;
         bool isLoaded = false;
 
@@ -39,6 +40,7 @@ namespace StanleyReports
             InitializeComponent();
 
             allEntries = GetEvents();
+            doors = File.ReadAllLines("Doors.csv");
 
             dataStartDate = allEntries.First().dateTime.Date;
             dataEndDate = allEntries.Last().dateTime.Date;
@@ -48,12 +50,11 @@ namespace StanleyReports
             entries = ApplyGlobalFilters(allEntries);
 
             isLoaded = true;
-            DisplayStatistics();
-            //UpdateAllDisplays(); // entries);
+            DisplayStatistics(null, null);
         }
 
         #region Display statistics
-        private void DisplayStatistics() //List<Entry> entries)
+        private void DisplayStatistics(object sender, RoutedEventArgs e)
         {
             StatisticsGrid.Visibility = (entries.Count == 0) ? Visibility.Collapsed : Visibility.Visible;
             StatisticsMissingDataText.Visibility = (entries.Count != 0) ? Visibility.Collapsed : Visibility.Visible;
@@ -65,12 +66,9 @@ namespace StanleyReports
             txtTotalEntries.Text = entries.Count.ToString();
             txtUniqueEntries.Text =  (from e1 in entries select e1.KeyholderID).Distinct().Count().ToString();
 
-            //var count = (from e1 in entries
-            //select e1.KeyholderID).Distinct().Count();
-
             #region Total Entries per day, week and month
-            //int aMin, aMax, aSum;
 
+            // Totals per day
             Dictionary<DateTime, int> aEntriesPerDay = new Dictionary<DateTime, int>();
             var aStart = entries.First().dateTime.Date;
             var aEnd = entries.Last().dateTime.Date;
@@ -88,25 +86,7 @@ namespace StanleyReports
 
             DisplayStatsTotal(aEntriesPerDay, txtTotalPerDayMin, txtTotalPerDayMax, txtTotalPerDaySum, txtTotalDayPeriods);
 
-            //TrimTotalDictionary(aEntriesPerDay, (bool)chkExcludeFirst.IsChecked, (bool)chkExcludeLast.IsChecked);
-
-            //aMin = int.MaxValue;
-            //aMax = int.MinValue;
-            //aSum = 0;
-            //int aValue;
-
-            //foreach (var key in aEntriesPerDay.Keys)
-            //{
-            //    aValue = aEntriesPerDay[key];
-            //    aMin = (aMin > aValue) ? aValue : aMin;
-            //    aMax = (aMax < aValue) ? aValue : aMax;
-            //    aSum += aValue;
-            //}
-            //txtTotalPerDayMin.Text = aMin.ToString();
-            //txtTotalPerDayMax.Text = aMax.ToString();
-            //txtTotalPerDaySum.Text = (aSum / aEntriesPerDay.Count).ToString();
-            //txtTotalDayPeriods.Text = aEntriesPerDay.Count.ToString();
-
+            // Totals per week
             Dictionary<DateTime, int> aEntriesPerWeek = new Dictionary<DateTime, int>();
             aStart = entries.First().dateTime.Date.AddDays(-(int)entries.First().dateTime.DayOfWeek);
             aEnd = entries.Last().dateTime.Date.AddDays(-(int)entries.Last().dateTime.DayOfWeek);
@@ -125,24 +105,7 @@ namespace StanleyReports
 
             DisplayStatsTotal(aEntriesPerWeek, txtTotalPerWeekMin, txtTotalPerWeekMax, txtTotalPerWeekSum, txtTotalWeekPeriods);
 
-            //TrimTotalDictionary(aEntriesPerWeek, (bool)chkExcludeFirst.IsChecked, (bool)chkExcludeLast.IsChecked);
-
-            //aMin = int.MaxValue;
-            //aMax = int.MinValue;
-            //aSum = 0;
-
-            //foreach (var key in aEntriesPerWeek.Keys)
-            //{
-            //    aValue = aEntriesPerWeek[key];
-            //    aMin = (aMin > aValue) ? aValue : aMin;
-            //    aMax = (aMax < aValue) ? aValue : aMax;
-            //    aSum += aValue;
-            //}
-            //txtTotalPerWeekMin.Text = aMin.ToString();
-            //txtTotalPerWeekMax.Text = aMax.ToString();
-            //txtTotalPerWeekSum.Text = (aSum / aEntriesPerWeek.Count).ToString();
-            //txtTotalWeekPeriods.Text = aEntriesPerWeek.Count.ToString();
-
+            // Totals per month
             Dictionary<DateTime, int> aEntriesPerMonth = new Dictionary<DateTime, int>();
             aStart = new DateTime(entries.First().dateTime.Year, entries.First().dateTime.Month, 1);
             aEnd = new DateTime(entries.Last().dateTime.Year, entries.Last().dateTime.Month, 1);
@@ -163,8 +126,8 @@ namespace StanleyReports
             #endregion
 
             #region Unique Entries per day, week and month
-            int min, max, sum;
 
+            // Uniques per day
             Dictionary<DateTime, List<int>> entriesPerDay = new Dictionary<DateTime, List<int>>();
             var start = entries.First().dateTime.Date;
             var end = entries.Last().dateTime.Date;
@@ -185,25 +148,7 @@ namespace StanleyReports
 
             DisplayStatsUnique(entriesPerDay, txtUniquePerDayMin, txtUniquePerDayMax, txtUniquePerDaySum, txtUniqueDayPeriods);
 
-            //TrimDictionary(entriesPerDay, (bool)chkExcludeFirst.IsChecked, (bool)chkExcludeLast.IsChecked);
-
-            //min = int.MaxValue;
-            //max = int.MinValue;
-            //sum = 0;
-            //int value;
-
-            //foreach (var key in entriesPerDay.Keys)
-            //{
-            //    value = entriesPerDay[key].Count;
-            //    min = (min > value) ? value : min;
-            //    max = (max < value) ? value : max;
-            //    sum += value;
-            //}
-            //txtUniquePerDayMin.Text = min.ToString();
-            //txtUniquePerDayMax.Text = max.ToString();
-            //txtUniquePerDaySum.Text = (sum / entriesPerDay.Count).ToString();
-            //txtUniqueDayPeriods.Text = entriesPerDay.Count.ToString();
-
+            // Uniques per week
             Dictionary<DateTime, List<int>> entriesPerWeek = new Dictionary<DateTime, List<int>>();
             DateTime weekKey;
             start = entries.First().dateTime.Date.AddDays(-(int)entries.First().dateTime.DayOfWeek);
@@ -228,24 +173,7 @@ namespace StanleyReports
 
             DisplayStatsUnique(entriesPerWeek, txtUniquePerWeekMin, txtUniquePerWeekMax, txtUniquePerWeekSum, txtUniqueWeekPeriods);
 
-            TrimDictionary(entriesPerWeek, (bool)chkExcludeFirst.IsChecked, (bool)chkExcludeLast.IsChecked);
-
-            //min = int.MaxValue;
-            //max = int.MinValue;
-            //sum = 0;
-
-            //foreach (var key in entriesPerWeek.Keys)
-            //{
-            //    value = entriesPerWeek[key].Count;
-            //    min = (min > value) ? value : min;
-            //    max = (max < value) ? value : max;
-            //    sum += value;
-            //}
-            //txtUniquePerWeekMin.Text = min.ToString();
-            //txtUniquePerWeekMax.Text = max.ToString();
-            //txtUniquePerWeekSum.Text = (sum / entriesPerWeek.Count).ToString();
-            //txtUniqueWeekPeriods.Text = entriesPerWeek.Count.ToString();
-
+            // Uniques per month
             Dictionary<DateTime, List<int>> entriesPerMonth = new Dictionary<DateTime, List<int>>();
             DateTime monthKey;
             start = new DateTime(entries.First().dateTime.Year, entries.First().dateTime.Month, 1);
@@ -269,24 +197,6 @@ namespace StanleyReports
             }
 
             DisplayStatsUnique(entriesPerMonth, txtUniquePerMonthMin, txtUniquePerMonthMax, txtUniquePerMonthSum, txtUniqueMonthPeriods);
-
-            TrimDictionary(entriesPerMonth, (bool)chkExcludeFirst.IsChecked, (bool)chkExcludeLast.IsChecked);
-
-            //min = int.MaxValue;
-            //max = int.MinValue;
-            //sum = 0;
-
-            //foreach (var key in entriesPerMonth.Keys)
-            //{
-            //    value = entriesPerMonth[key].Count;
-            //    min = (min > value) ? value : min;
-            //    max = (max < value) ? value : max;
-            //    sum += value;
-            //}
-            //txtUniquePerMonthMin.Text = min.ToString();
-            //txtUniquePerMonthMax.Text = max.ToString();
-            //txtUniquePerMonthSum.Text = (sum / entriesPerMonth.Count).ToString();
-            //txtUniqueMonthPeriods.Text = entriesPerMonth.Count.ToString();
 
             #endregion
 
@@ -353,50 +263,15 @@ namespace StanleyReports
         }
         #endregion
 
-        #region Entry distribution
-        private void DisplayEntryDistribution(object sender, RoutedEventArgs e) //List<Entry> entries)
-        {
-
-        Dictionary<int, int> freqDist = new Dictionary<int, int>();
-
-            var groupedUsers =
-                from entry in entries
-                group entry by entry.KeyholderID into userGroup
-                orderby userGroup.Count()
-                select userGroup;
-
-            foreach (var userGroup in groupedUsers)
-            {
-                if (!freqDist.ContainsKey(userGroup.Count()))
-                {
-                    freqDist.Add(userGroup.Count(), 1);
-                }
-                else
-                {
-                    freqDist[userGroup.Count()]++;
-                }
-            }
-
-            int[] numberOfusers = new int[freqDist.Last().Key + 1];
-
-            foreach (var fd in freqDist)
-            {
-                numberOfusers[fd.Key] = fd.Value;
-            }
-
-            distributionDS.Clear();
-            var xs = Enumerable.Range(0, numberOfusers.Count() - 1);
-            for (int i = 0; i < numberOfusers.Count(); i++)
-            {
-                distributionDS.Append(i, numberOfusers[i]);
-            }
-        }
-        #endregion
-
         #region Entries per day
         private void DisplayEntriesByDay(object sender, RoutedEventArgs e)
         {
             if (!isLoaded) return;
+            if (entries.Count == 0)
+            {
+                entriesByDayDS.Clear();
+                return;
+            }
 
             TimeSpan window = GetBinTimeSpan(entriesByDayWindow);
 
@@ -412,12 +287,17 @@ namespace StanleyReports
             Dictionary < TimeSpan, int> entryGroups = new Dictionary<TimeSpan, int>();
             Int64 keyAsTicks = 0;
             TimeSpan key;
+            bool showAverage = (bool)entriesByDayShowAverage.IsChecked;
+            int numberOfDays = (entries.Last().dateTime.Date - entries.First().dateTime.Date).Days + 1;
             do
             {
                 key = new TimeSpan(keyAsTicks);
                 if (groupedInDay.ContainsKey(key))
                 {
-                    entryGroups.Add(key, groupedInDay[key]);
+                    if (showAverage)
+                        entryGroups.Add(key, groupedInDay[key] / numberOfDays);
+                    else
+                        entryGroups.Add(key, groupedInDay[key]);
                 }
                 else
                 {
@@ -449,8 +329,8 @@ namespace StanleyReports
 
             var groupedInWeek =
                             (from entry in entries
-                             let percentile = GetTimeSpanForWeek(entry, window.Ticks)
-                             group new { entry.KeyholderID } by percentile into timeSpanGroup
+                             let groupKey = GetTimeSpanForWeek(entry, window.Ticks)
+                             group new { entry.KeyholderID } by groupKey into timeSpanGroup
                              orderby timeSpanGroup.Key
                              select new { Name = timeSpanGroup.Key, Data = timeSpanGroup.Count() })
                             .ToDictionary(z => z.Name, z => z.Data);
@@ -459,26 +339,30 @@ namespace StanleyReports
             Dictionary<DateTime, int> entryGroups = new Dictionary<DateTime, int>();
             Int64 keyAsTicks = 0;
             TimeSpan key;
+            bool showAverage = (bool)entriesByWeekShowAverage.IsChecked;
+            int[] dayOfWeekCount = new int[7];
+            int count = 0;
+            do
+            {
+                dayOfWeekCount[(int)((dataStartDate.AddDays(count)).DayOfWeek)]++;
+            } while (dataStartDate.AddDays(++count) <= dataEndDate.Date);
+
             do
             {
                 key = new TimeSpan(keyAsTicks);
                 if (groupedInWeek.ContainsKey(key))
                 {
-                    entryGroups.Add((new DateTime(key.Ticks)).AddDays(6), groupedInWeek[key]);
+                    entryGroups.Add(new DateTime(key.Ticks + 6 * TimeSpan.TicksPerDay), groupedInWeek[key]);
                 }
                 else
                 {
-                    entryGroups.Add((new DateTime(key.Ticks)).AddDays(6), 0);
+                    entryGroups.Add(new DateTime(key.Ticks + 6 * TimeSpan.TicksPerDay), 0);
                 }
 
                 keyAsTicks += window.Ticks;
             } while (keyAsTicks < TimeSpan.TicksPerDay * 7);
 
             entriesByWeekDS.Clear();
-            //var oneDay = new TimeSpan(24, 0, 0);
-            //foreach (var data in entryGroups)
-            //    if (data.Key < oneDay)
-            //        entriesByWeekDS.Append(data.Key, data.Value);
             entriesByWeekDS.Append(entryGroups.Keys, entryGroups.Values);
         }
 
@@ -539,17 +423,71 @@ namespace StanleyReports
 
         #endregion
 
+        #region Entry distribution
+        private void DisplayEntryDistribution(object sender, RoutedEventArgs e)
+        {
+
+            Dictionary<int, int> freqDist = new Dictionary<int, int>();
+
+            var groupedUsers =
+                from entry in entries
+                group entry by entry.KeyholderID into userGroup
+                orderby userGroup.Count()
+                select userGroup;
+
+            foreach (var userGroup in groupedUsers)
+            {
+                if (!freqDist.ContainsKey(userGroup.Count()))
+                {
+                    freqDist.Add(userGroup.Count(), 1);
+                }
+                else
+                {
+                    freqDist[userGroup.Count()]++;
+                }
+            }
+
+            int[] numberOfusers = new int[freqDist.Last().Key + 1];
+
+            foreach (var fd in freqDist)
+            {
+                numberOfusers[fd.Key] = fd.Value;
+            }
+
+            distributionDS.Clear();
+            var xs = Enumerable.Range(0, numberOfusers.Count() - 1);
+            for (int i = 0; i < numberOfusers.Count(); i++)
+            {
+                distributionDS.Append(i, numberOfusers[i]);
+            }
+        }
+        #endregion
+
         #region Private helper methods
 
         private List<Entry> ApplyGlobalFilters(List<Entry> allEntries)
         {
+            List<Entry> results;
+
             DateTime start = ((DateTime)startDate.SelectedDate).Date;
             DateTime end = ((DateTime)endDate.SelectedDate).Date;
-            var filtered = from e in allEntries
-                     where (e.dateTime.Date >= start) && (e.dateTime.Date <= end)
-                     select e;
 
-            return filtered.ToList<Entry>();
+            if (IsLoaded && (cboDoor.SelectedIndex != 0))
+            {
+                string idString = cboDoor.SelectedItem.ToString().Split('-')[1];
+                int iD = int.Parse(idString);
+                results = (from e in allEntries
+                           where (e.dateTime.Date >= start) && (e.dateTime.Date <= end) && (e.EntrySourceID == iD)
+                           select e).ToList<Entry>();
+            }
+            else
+            {
+                results = (from e in allEntries
+                           where (e.dateTime.Date >= start) && (e.dateTime.Date <= end)
+                           select e).ToList<Entry>();
+            }
+
+            return results;
         }
 
         private void InitializeGUI(DateTime dataStartDate, DateTime dataEndDate)
@@ -563,6 +501,13 @@ namespace StanleyReports
             endDate.DisplayDateStart = dataStartDate;
             endDate.DisplayDateEnd = dataEndDate;
             endDate.SelectedDate = dataEndDate;
+
+            cboDoor.Items.Add(new ComboBoxItem() {Content="All", IsSelected = true });
+            //ComboBoxItem cbi;
+            foreach (string door in doors)
+            {
+                cboDoor.Items.Add(door.Split(',')[0] + " - " + door.Split(',')[1]);
+            }
 
             // Fill theme combo box and set default theme
             foreach (string theme in Abt.Controls.SciChart.ThemeManager.AllThemes)
@@ -606,7 +551,7 @@ namespace StanleyReports
         {
             isLoaded = true;    //Allow updates on GUI changes now
 
-            DisplayStatistics(); //entries);
+            DisplayStatistics(null, null); //entries);
             DisplayEntryDistribution(null, null); // (entries);
         }
 
@@ -655,7 +600,7 @@ namespace StanleyReports
             switch (ReportsTabControl.SelectedIndex)
             {
                 case 0:
-                    DisplayStatistics();
+                    DisplayStatistics(null, null);
                     break;
                 case 1:
                     DisplayEntryDistribution(null, null);
