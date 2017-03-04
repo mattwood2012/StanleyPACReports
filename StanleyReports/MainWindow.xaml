@@ -163,7 +163,60 @@
                     </Grid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Entries By Day">
+            <TabItem Header="All Entries">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Grid.Row="0" Header="Report Settings">
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox Name="entriesAllWindow" Margin="10" SelectionChanged="DisplayEntriesAll">
+                                <ComboBoxItem>5 Minutes</ComboBoxItem>
+                                <ComboBoxItem>10 Minutes</ComboBoxItem>
+                                <ComboBoxItem>15 Minutes</ComboBoxItem>
+                                <ComboBoxItem>30 Minutes</ComboBoxItem>
+                                <ComboBoxItem>1 Hour</ComboBoxItem>
+                                <ComboBoxItem>2 Hours</ComboBoxItem>
+                                <ComboBoxItem>4 Hours</ComboBoxItem>
+                                <ComboBoxItem>8 Hours</ComboBoxItem>
+                                <ComboBoxItem IsSelected="True">24 Hours</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </Expander>
+                    <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesAll" Loaded="DisplayEntriesAll" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
+
+                        <!-- Define RenderableSeries -->
+                        <SciChart:SciChartSurface.RenderableSeries>
+                            <SciChart:FastColumnRenderableSeries x:Name="entriesAllRenderableSeries" />
+                        </SciChart:SciChartSurface.RenderableSeries>
+
+                        <!--  Create an X Axis -->
+                        <SciChart:SciChartSurface.XAxis>
+                            <SciChart:DateTimeAxis AxisTitle="Date" />
+                        </SciChart:SciChartSurface.XAxis>
+
+                        <!--  Create a Y Axis -->
+                        <SciChart:SciChartSurface.YAxes>
+                            <SciChart:NumericAxis AxisAlignment="Left" CursorTextFormatting="0" AxisTitle="Number of Entries" />
+                        </SciChart:SciChartSurface.YAxes>
+
+                        <!--  ChartModifiers to add interactivity  -->
+                        <SciChart:SciChartSurface.ChartModifier>
+                            <SciChart:ModifierGroup>
+                                <SciChart:RubberBandXyZoomModifier />
+                                <SciChart:ZoomExtentsModifier />
+                                <SciChart:MouseWheelZoomModifier />
+                                <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents" />
+                                <SciChart:YAxisDragModifier />
+                                <SciChart:CursorModifier />
+                            </SciChart:ModifierGroup>
+                        </SciChart:SciChartSurface.ChartModifier>
+
+                    </SciChart:SciChartSurface>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Entries By Time of Day">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -215,7 +268,7 @@
                     </SciChart:SciChartSurface>
                 </Grid>
             </TabItem>
-            <TabItem Header="Entries By Week">
+            <TabItem Header="Entries By Day of Week">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -234,7 +287,7 @@
                                 <ComboBoxItem>8 Hours</ComboBoxItem>
                                 <ComboBoxItem>24 Hours</ComboBoxItem>
                             </ComboBox>
-                            <CheckBox Name="entriesByWeekShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByDay">Average</CheckBox>
+                            <CheckBox Name="entriesByWeekShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByWeek">Average</CheckBox>
                         </StackPanel>
                     </Expander>
                     <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByWeekChart" Loaded="DisplayEntriesByWeek" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
@@ -269,7 +322,7 @@
                     </SciChart:SciChartSurface>
                 </Grid>
             </TabItem>
-            <TabItem Header="Entries By Month">
+            <TabItem Header="Entries By Day Month">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -287,8 +340,8 @@
                                 <ComboBoxItem>4 Hours</ComboBoxItem>
                                 <ComboBoxItem>8 Hours</ComboBoxItem>
                                 <ComboBoxItem>24 Hours</ComboBoxItem>
-                                <CheckBox Name="entriesByMonthShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByDay">Average</CheckBox>
                             </ComboBox>
+                            <CheckBox Name="entriesByMonthShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByMonth">Average</CheckBox>
                         </StackPanel>
                     </Expander>
                     <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByMonthChart" Loaded="DisplayEntriesByMonth" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">

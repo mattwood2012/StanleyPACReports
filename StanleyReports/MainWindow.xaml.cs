@@ -324,6 +324,11 @@ namespace StanleyReports
         private void DisplayEntriesByWeek(object sender, RoutedEventArgs e)
         {
             if (!isLoaded) return;
+            if (entries.Count == 0)
+            {
+                entriesByWeekDS.Clear();
+                return;
+            }
 
             TimeSpan window = GetBinTimeSpan(entriesByWeekWindow);
 
@@ -338,25 +343,46 @@ namespace StanleyReports
             // Create a dictionary that has all time windows as keys and count or zero as value
             Dictionary<DateTime, int> entryGroups = new Dictionary<DateTime, int>();
             Int64 keyAsTicks = 0;
-            TimeSpan key;
+            TimeSpan groupedInWeekKey;
+            DateTime key;
             bool showAverage = (bool)entriesByWeekShowAverage.IsChecked;
             int[] dayOfWeekCount = new int[7];
             int count = 0;
+            int value;
+            DateTime startingDate = (DateTime)startDate.SelectedDate;
+            DateTime endingDate = (DateTime)endDate.SelectedDate;
+
+            // Correct for DateTime.MinValue being a Sunday so when TimeSpan key is converted back to date the correct day of week is displayed
+            long dayOfWeekOffset = 6 * TimeSpan.TicksPerDay; 
+
+            // Calculate a count for each day of week in total date range
             do
             {
-                dayOfWeekCount[(int)((dataStartDate.AddDays(count)).DayOfWeek)]++;
-            } while (dataStartDate.AddDays(++count) <= dataEndDate.Date);
+                dayOfWeekCount[(int)((startingDate.AddDays(count)).DayOfWeek)]++;
+            } while (startingDate.AddDays(++count) <= endingDate.Date);
+
+            if (showAverage)
+                for (int i = 0; i < 7; i++) System.Diagnostics.Debug.WriteLine((DayOfWeek)i + " " + dayOfWeekCount[i]);
+            else
+                System.Diagnostics.Debug.WriteLine("Showing Totals");
 
             do
             {
-                key = new TimeSpan(keyAsTicks);
-                if (groupedInWeek.ContainsKey(key))
+                groupedInWeekKey = new TimeSpan(keyAsTicks);
+                key = new DateTime(groupedInWeekKey.Ticks + dayOfWeekOffset);
+                if (groupedInWeek.ContainsKey(groupedInWeekKey))
                 {
-                    entryGroups.Add(new DateTime(key.Ticks + 6 * TimeSpan.TicksPerDay), groupedInWeek[key]);
+                    if (showAverage)
+                    {
+                        value = (dayOfWeekCount[(int)key.DayOfWeek] == 0) ? 0 : groupedInWeek[groupedInWeekKey] / dayOfWeekCount[(int)key.DayOfWeek];
+                        entryGroups.Add(key, value);
+                    }
+                    else
+                        entryGroups.Add(key, groupedInWeek[groupedInWeekKey]);
                 }
                 else
                 {
-                    entryGroups.Add(new DateTime(key.Ticks + 6 * TimeSpan.TicksPerDay), 0);
+                    entryGroups.Add(key, 0);
                 }
 
                 keyAsTicks += window.Ticks;
@@ -380,6 +406,12 @@ namespace StanleyReports
         {
             if (!isLoaded) return;
 
+            if (entries.Count == 0)
+            {
+                entriesByMonthDS.Clear();
+                return;
+            }
+
             TimeSpan window = GetBinTimeSpan(entriesByMonthWindow);
 
             var groupedInMonth =
@@ -393,18 +425,44 @@ namespace StanleyReports
             // Create a dictionary that has all time windows as keys and count or zero as value
             Dictionary<DateTime, int> entryGroups = new Dictionary<DateTime, int>();
             Int64 keyAsTicks = 0;
-            TimeSpan key;
-            TimeSpan oneDay = new TimeSpan(1, 0, 0, 0);
+            TimeSpan groupedInMonthKey;
+            DateTime key;
+            bool showAverage = (bool)entriesByMonthShowAverage.IsChecked;
+            int[] dayOfMonthCount = new int[32];
+            int count = 0;
+            int value;
+            //TimeSpan oneDay = new TimeSpan(1, 0, 0, 0);
+
+            // Calculate a count for each day of month in total date range
+            DateTime startingDate = (DateTime)startDate.SelectedDate;
+            DateTime endingDate = (DateTime)endDate.SelectedDate;
             do
             {
-                key = new TimeSpan(keyAsTicks);
-                if (groupedInMonth.ContainsKey(key))
+                dayOfMonthCount[(int)((startingDate.AddDays(count)).Day)]++;
+            } while (startingDate.AddDays(++count) <= endingDate.Date);
+
+            if (showAverage)
+                for (int i = 1; i < 32; i++) System.Diagnostics.Debug.WriteLine(i + " " + dayOfMonthCount[i]);
+            else
+                System.Diagnostics.Debug.WriteLine("Showing Totals");
+
+            do
+            {
+                groupedInMonthKey = new TimeSpan(keyAsTicks + TimeSpan.TicksPerDay);
+                key = new DateTime(keyAsTicks);
+                if (groupedInMonth.ContainsKey(groupedInMonthKey))
                 {
-                    entryGroups.Add(new DateTime(key.Ticks), groupedInMonth[key]);
+                    if (showAverage)
+                    {
+                        value = (dayOfMonthCount[(int)key.Day] == 0) ? 0 : groupedInMonth[groupedInMonthKey] / dayOfMonthCount[(int)key.Day];
+                        entryGroups.Add(key, value);
+                    }
+                    else
+                        entryGroups.Add(key, groupedInMonth[groupedInMonthKey]);
                 }
                 else
                 {
-                    entryGroups.Add(new DateTime(key.Ticks), 0);
+                    entryGroups.Add(key, 0);
                 }
 
                 keyAsTicks += window.Ticks;
@@ -416,8 +474,9 @@ namespace StanleyReports
 
         private static TimeSpan GetTimeSpanForMonth(Entry entry, Int64 windowTicks)
         {
-            var entryTicks = ((int)entry.dateTime.Day - 1) * TimeSpan.TicksPerDay + entry.dateTime.TimeOfDay.Ticks;
+            var entryTicks = ((int)entry.dateTime.Day) * TimeSpan.TicksPerDay + entry.dateTime.TimeOfDay.Ticks;
             long bin = entryTicks / windowTicks;
+            var ts = new TimeSpan(bin * windowTicks);
             return new TimeSpan(bin * windowTicks);
         }
 
@@ -595,6 +654,9 @@ namespace StanleyReports
         {
             if (!IsLoaded) return;
 
+            dataStartDate = (DateTime)startDate.SelectedDate;
+            dataEndDate = (DateTime)endDate.SelectedDate;
+
             entries = ApplyGlobalFilters(allEntries);
 
             switch (ReportsTabControl.SelectedIndex)
@@ -603,7 +665,7 @@ namespace StanleyReports
                     DisplayStatistics(null, null);
                     break;
                 case 1:
-                    DisplayEntryDistribution(null, null);
+                    DisplayAll(null, null);
                     break;
                 case 2:
                     DisplayEntriesByDay(null, null);
@@ -613,6 +675,9 @@ namespace StanleyReports
                     break;
                 case 4:
                     DisplayEntriesByMonth(null, null);
+                    break;
+                case 5:
+                    DisplayEntryDistribution(null, null);
                     break;
                 default:
                     break;
