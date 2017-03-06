@@ -193,7 +193,7 @@
 
                         <!--  Create an X Axis -->
                         <SciChart:SciChartSurface.XAxis>
-                            <SciChart:DateTimeAxis AxisTitle="Date" />
+                            <SciChart:DateTimeAxis CursorTextFormatting="ddd MM/dd/yyyy"  AxisTitle="Date" />
                         </SciChart:SciChartSurface.XAxis>
 
                         <!--  Create a Y Axis -->
@@ -224,6 +224,7 @@
                     </Grid.RowDefinitions>
                     <Expander IsExpanded="True" BorderBrush="Gray" BorderThickness="1" Grid.Row="0" Header="Report Settings">
                         <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5,13,0,0" Text="Grouping Size:" />
                             <ComboBox Name="entriesByDayWindow" Margin="10" SelectionChanged="DisplayEntriesByDay">
                                 <ComboBoxItem>5 Minutes</ComboBoxItem>
                                 <ComboBoxItem>10 Minutes</ComboBoxItem>
@@ -234,6 +235,7 @@
                                 <ComboBoxItem>4 Hours</ComboBoxItem>
                             </ComboBox>
                             <CheckBox Name="entriesByDayShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByDay">Average</CheckBox>
+                            <!--<CheckBox Name="entriesByDayShowCursor" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByDay">Show Cursor</CheckBox>-->
                         </StackPanel>
                     </Expander>
                     <SciChart:SciChartSurface Grid.Row="1" x:Name="entriesByDayChart" Loaded="DisplayEntriesByDay" SciChart:ThemeManager.Theme="{Binding ElementName=cboTheme, Path=SelectedValue}">
@@ -245,7 +247,7 @@
 
                         <!--  Create an X Axis -->
                         <SciChart:SciChartSurface.XAxis>
-                            <SciChart:TimeSpanAxis AxisTitle="Time of Day" />
+                            <SciChart:TimeSpanAxis CursorTextFormatting="c" AxisTitle="Time of Day" />
                         </SciChart:SciChartSurface.XAxis>
 
                         <!--  Create a Y Axis -->
@@ -261,7 +263,8 @@
                                 <SciChart:MouseWheelZoomModifier />
                                 <SciChart:XAxisDragModifier ClipModeX="ClipAtExtents" />
                                 <SciChart:YAxisDragModifier />
-                                <SciChart:CursorModifier />
+                                <!--<SciChart:CursorModifier IsEnabled="{Binding ElementName=entriesByDayShowCursor, Path=IsChecked}" />-->
+                                <SciChart:CursorModifier IsEnabled="{Binding ElementName=entriesByDayShowCursor, Path=IsChecked}" />
                             </SciChart:ModifierGroup>
                         </SciChart:SciChartSurface.ChartModifier>
 

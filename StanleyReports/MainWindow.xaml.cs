@@ -30,10 +30,11 @@ namespace StanleyReports
 
         //IOrderedEnumerable<IGrouping<int, Entry>> queryUsers;
 
-        XyDataSeries<int,int> distributionDS = new XyDataSeries<int,int>();
+        XyDataSeries<DateTime, int> entriesAllDS = new XyDataSeries<DateTime, int>();
         XyDataSeries<TimeSpan, int> entriesByDayDS = new XyDataSeries<TimeSpan,int>();
         XyDataSeries<DateTime, int> entriesByWeekDS = new XyDataSeries<DateTime, int>();
         XyDataSeries<DateTime, int> entriesByMonthDS = new XyDataSeries<DateTime, int>();
+        XyDataSeries<int,int> distributionDS = new XyDataSeries<int,int>();
 
         public MainWindow()
         {
@@ -263,6 +264,53 @@ namespace StanleyReports
         }
         #endregion
 
+        #region All Entries
+        private void DisplayEntriesAll(object sender, RoutedEventArgs e)
+        {
+            if (!isLoaded) return;
+
+            if (entries.Count == 0)
+            {
+                entriesAllDS.Clear();
+                return;
+            }
+
+
+            Dictionary<DateTime, int> allEntriesDictionary = new Dictionary<DateTime, int>();
+
+            long windowTicks = GetBinTimeSpan(entriesAllWindow).Ticks;
+
+            DateTime startingDate = (DateTime)startDate.SelectedDate;
+            long endingTicks = ((DateTime)endDate.SelectedDate).Date.Ticks + TimeSpan.TicksPerDay;
+            int entryPtr = 0;
+            DateTime key;
+            long keyTicks = entries.First().dateTime.Date.Ticks;
+
+            // Calculate a count for each day of week in total date range
+            do
+            {
+
+                key = new DateTime(keyTicks);
+                allEntriesDictionary.Add(key, 0);
+
+                while (entries[entryPtr++].dateTime.Ticks < (keyTicks + windowTicks))
+                {
+                    allEntriesDictionary[key]++;
+                    if (entryPtr == entries.Count)
+                        break;
+                }
+                keyTicks += windowTicks;
+
+            } while ((keyTicks <= endingTicks) && (entryPtr < entries.Count));
+
+            entriesAllDS.Clear();
+            var keys = allEntriesDictionary.Keys.ToList();
+            var values = allEntriesDictionary.Values.ToList();
+            entriesAllDS.Append(allEntriesDictionary.Keys, allEntriesDictionary.Values);
+        }
+
+        #endregion
+
         #region Entries per day
         private void DisplayEntriesByDay(object sender, RoutedEventArgs e)
         {
@@ -485,6 +533,14 @@ namespace StanleyReports
         #region Entry distribution
         private void DisplayEntryDistribution(object sender, RoutedEventArgs e)
         {
+            if (!isLoaded) return;
+
+            if (entries.Count == 0)
+            {
+                distributionDS.Clear();
+                return;
+            }
+
 
             Dictionary<int, int> freqDist = new Dictionary<int, int>();
 
@@ -521,6 +577,7 @@ namespace StanleyReports
             }
         }
         #endregion
+
 
         #region Private helper methods
 
@@ -575,8 +632,8 @@ namespace StanleyReports
             }
             cboTheme.SelectedItem = "Chrome";
 
-            // Entry Distribution
-            distributionRenderableSeries.DataSeries = distributionDS;
+            // All Entries
+            entriesAllRenderableSeries.DataSeries = entriesAllDS;
 
             // Entries by day
             entriesByDayRenderableSeries.DataSeries = entriesByDayDS;
@@ -586,6 +643,9 @@ namespace StanleyReports
 
             // Entries by month
             entriesByMonthRenderableSeries.DataSeries = entriesByMonthDS;
+
+            // Entry Distribution
+            distributionRenderableSeries.DataSeries = distributionDS;
         }
 
         private List<Entry> GetEvents()
@@ -665,7 +725,7 @@ namespace StanleyReports
                     DisplayStatistics(null, null);
                     break;
                 case 1:
-                    DisplayAll(null, null);
+                    DisplayEntriesAll(null, null);
                     break;
                 case 2:
                     DisplayEntriesByDay(null, null);
