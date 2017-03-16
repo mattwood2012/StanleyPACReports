@@ -23,7 +23,7 @@ namespace StanleyReports
     public partial class MainWindow : Window
     {
         List<Entry> allEntries;
-        List<Entry> entries;
+        List<Entry> globallyFilteredEntries;
         string[] doors;
         DateTime dataStartDate, dataEndDate;
         bool isLoaded = false;
@@ -48,7 +48,7 @@ namespace StanleyReports
 
             InitializeGUI(dataStartDate, dataEndDate);
 
-            entries = ApplyGlobalFilters(allEntries);
+            globallyFilteredEntries = ApplyGlobalFilters(allEntries);
 
             isLoaded = true;
             DisplayStatistics(null, null);
@@ -57,22 +57,22 @@ namespace StanleyReports
         #region Display statistics
         private void DisplayStatistics(object sender, RoutedEventArgs e)
         {
-            StatisticsGrid.Visibility = (entries.Count == 0) ? Visibility.Collapsed : Visibility.Visible;
-            StatisticsMissingDataText.Visibility = (entries.Count != 0) ? Visibility.Collapsed : Visibility.Visible;
+            StatisticsGrid.Visibility = (globallyFilteredEntries.Count == 0) ? Visibility.Collapsed : Visibility.Visible;
+            StatisticsMissingDataText.Visibility = (globallyFilteredEntries.Count != 0) ? Visibility.Collapsed : Visibility.Visible;
 
-            if (entries.Count == 0) return;
+            if (globallyFilteredEntries.Count == 0) return;
 
-            txtDataStartsOn.Text = String.Format("{0:MM/dd/yyyy} at {0:HH:mm:ss}", entries.First().dateTime);
-            txtDataEndsOn.Text = String.Format("{0:MM/dd/yyyy} at {0:HH:mm:ss}", entries.Last().dateTime);
-            txtTotalEntries.Text = entries.Count.ToString();
-            txtUniqueEntries.Text =  (from e1 in entries select e1.KeyholderID).Distinct().Count().ToString();
+            txtDataStartsOn.Text = String.Format("{0:MM/dd/yyyy} at {0:HH:mm:ss}", globallyFilteredEntries.First().dateTime);
+            txtDataEndsOn.Text = String.Format("{0:MM/dd/yyyy} at {0:HH:mm:ss}", globallyFilteredEntries.Last().dateTime);
+            txtTotalEntries.Text = globallyFilteredEntries.Count.ToString();
+            txtUniqueEntries.Text =  (from e1 in globallyFilteredEntries select e1.KeyholderID).Distinct().Count().ToString();
 
             #region Total Entries per day, week and month
 
             // Totals per day
             Dictionary<DateTime, int> aEntriesPerDay = new Dictionary<DateTime, int>();
-            var aStart = entries.First().dateTime.Date;
-            var aEnd = entries.Last().dateTime.Date;
+            var aStart = globallyFilteredEntries.First().dateTime.Date;
+            var aEnd = globallyFilteredEntries.Last().dateTime.Date;
             int aDayCount = 0;
 
             while (aStart.AddDays(aDayCount) <= aEnd)
@@ -80,7 +80,7 @@ namespace StanleyReports
                 aEntriesPerDay.Add(aStart.AddDays(aDayCount++), 0);
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in globallyFilteredEntries)
             {
                 aEntriesPerDay[entry.dateTime.Date]++;
             }
@@ -89,8 +89,8 @@ namespace StanleyReports
 
             // Totals per week
             Dictionary<DateTime, int> aEntriesPerWeek = new Dictionary<DateTime, int>();
-            aStart = entries.First().dateTime.Date.AddDays(-(int)entries.First().dateTime.DayOfWeek);
-            aEnd = entries.Last().dateTime.Date.AddDays(-(int)entries.Last().dateTime.DayOfWeek);
+            aStart = globallyFilteredEntries.First().dateTime.Date.AddDays(-(int)globallyFilteredEntries.First().dateTime.DayOfWeek);
+            aEnd = globallyFilteredEntries.Last().dateTime.Date.AddDays(-(int)globallyFilteredEntries.Last().dateTime.DayOfWeek);
             aDayCount = 0;
 
             while (aStart.AddDays(aDayCount) <= aEnd)
@@ -99,7 +99,7 @@ namespace StanleyReports
                 aDayCount += 7;
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in globallyFilteredEntries)
             {
                 aEntriesPerWeek[entry.dateTime.Date.AddDays(-(int)entry.dateTime.DayOfWeek)]++;
             }
@@ -108,8 +108,8 @@ namespace StanleyReports
 
             // Totals per month
             Dictionary<DateTime, int> aEntriesPerMonth = new Dictionary<DateTime, int>();
-            aStart = new DateTime(entries.First().dateTime.Year, entries.First().dateTime.Month, 1);
-            aEnd = new DateTime(entries.Last().dateTime.Year, entries.Last().dateTime.Month, 1);
+            aStart = new DateTime(globallyFilteredEntries.First().dateTime.Year, globallyFilteredEntries.First().dateTime.Month, 1);
+            aEnd = new DateTime(globallyFilteredEntries.Last().dateTime.Year, globallyFilteredEntries.Last().dateTime.Month, 1);
             int aMonthCount = 0;
 
             while (aStart.AddMonths(aMonthCount) <= aEnd)
@@ -117,7 +117,7 @@ namespace StanleyReports
                 aEntriesPerMonth.Add(aStart.AddMonths(aMonthCount++), 0);
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in globallyFilteredEntries)
             {
                 aEntriesPerMonth[new DateTime(entry.dateTime.Year, entry.dateTime.Month, 1)]++;
             }
@@ -130,8 +130,8 @@ namespace StanleyReports
 
             // Uniques per day
             Dictionary<DateTime, List<int>> entriesPerDay = new Dictionary<DateTime, List<int>>();
-            var start = entries.First().dateTime.Date;
-            var end = entries.Last().dateTime.Date;
+            var start = globallyFilteredEntries.First().dateTime.Date;
+            var end = globallyFilteredEntries.Last().dateTime.Date;
             int dayCount = 0;
 
             while (start.AddDays(dayCount) <= end)
@@ -139,7 +139,7 @@ namespace StanleyReports
                 entriesPerDay.Add(start.AddDays(dayCount++), new List<int>());
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in globallyFilteredEntries)
             {
                 if (!entriesPerDay[entry.dateTime.Date].Contains(entry.KeyholderID))
                 {
@@ -152,8 +152,8 @@ namespace StanleyReports
             // Uniques per week
             Dictionary<DateTime, List<int>> entriesPerWeek = new Dictionary<DateTime, List<int>>();
             DateTime weekKey;
-            start = entries.First().dateTime.Date.AddDays(-(int)entries.First().dateTime.DayOfWeek);
-            end = entries.Last().dateTime.Date.AddDays(-(int)entries.Last().dateTime.DayOfWeek);
+            start = globallyFilteredEntries.First().dateTime.Date.AddDays(-(int)globallyFilteredEntries.First().dateTime.DayOfWeek);
+            end = globallyFilteredEntries.Last().dateTime.Date.AddDays(-(int)globallyFilteredEntries.Last().dateTime.DayOfWeek);
             dayCount = 0;
 
             while (start.AddDays(dayCount) <= end)
@@ -162,7 +162,7 @@ namespace StanleyReports
                 dayCount += 7;
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in globallyFilteredEntries)
             {
                 weekKey = entry.dateTime.Date.AddDays(-(int)entry.dateTime.DayOfWeek);
 
@@ -177,8 +177,8 @@ namespace StanleyReports
             // Uniques per month
             Dictionary<DateTime, List<int>> entriesPerMonth = new Dictionary<DateTime, List<int>>();
             DateTime monthKey;
-            start = new DateTime(entries.First().dateTime.Year, entries.First().dateTime.Month, 1);
-            end = new DateTime(entries.Last().dateTime.Year, entries.Last().dateTime.Month, 1);
+            start = new DateTime(globallyFilteredEntries.First().dateTime.Year, globallyFilteredEntries.First().dateTime.Month, 1);
+            end = new DateTime(globallyFilteredEntries.Last().dateTime.Year, globallyFilteredEntries.Last().dateTime.Month, 1);
             int monthCount = 0;
 
             while (start.AddMonths(monthCount) <= end)
@@ -186,7 +186,7 @@ namespace StanleyReports
                 entriesPerMonth.Add(start.AddMonths(monthCount++), new List<int>());
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in globallyFilteredEntries)
             {
 
                 monthKey = new DateTime(entry.dateTime.Year, entry.dateTime.Month, 1);
@@ -206,7 +206,7 @@ namespace StanleyReports
         private void DisplayStatsTotal(Dictionary<DateTime, int> entriesPer, TextBlock txtMin, TextBlock txtMax, TextBlock txtSum, TextBlock txtPeriods)
         {
             int aMin, aMax, aSum, aValue;
-            TrimTotalDictionary(entriesPer, (bool)chkExcludeFirst.IsChecked, (bool)chkExcludeLast.IsChecked);
+            TrimTotalDictionary(entriesPer, (bool)chkStatsExcludeFirst.IsChecked, (bool)chkStatsExcludeLast.IsChecked);
 
             if (entriesPer.Count() == 0)
             {
@@ -236,7 +236,7 @@ namespace StanleyReports
         private void DisplayStatsUnique(Dictionary<DateTime, List<int>> entriesPer, TextBlock txtMin, TextBlock txtMax, TextBlock txtSum, TextBlock txtPeriods)
         {
             int aMin, aMax, aSum, aValue;
-            TrimDictionary(entriesPer, (bool)chkExcludeFirst.IsChecked, (bool)chkExcludeLast.IsChecked);
+            TrimDictionary(entriesPer, (bool)chkStatsExcludeFirst.IsChecked, (bool)chkStatsExcludeLast.IsChecked);
 
             if (entriesPer.Count() == 0)
             {
@@ -269,14 +269,15 @@ namespace StanleyReports
         {
             if (!isLoaded) return;
 
-            if (entries.Count == 0)
+            if (globallyFilteredEntries.Count == 0)
             {
                 entriesAllDS.Clear();
                 return;
             }
 
 
-            Dictionary<DateTime, int> allEntriesDictionary = new Dictionary<DateTime, int>();
+            Dictionary<DateTime, List<int>> allEntriesDictionary = new Dictionary<DateTime, List<int>>();
+            //Dictionary<DateTime, int> allEntriesDictionary = new Dictionary<DateTime, int>();
 
             long windowTicks = GetBinTimeSpan(entriesAllWindow).Ticks;
 
@@ -284,29 +285,45 @@ namespace StanleyReports
             long endingTicks = ((DateTime)endDate.SelectedDate).Date.Ticks + TimeSpan.TicksPerDay;
             int entryPtr = 0;
             DateTime key;
-            long keyTicks = entries.First().dateTime.Date.Ticks;
+            long keyTicks = globallyFilteredEntries.First().dateTime.Date.Ticks;
 
             // Calculate a count for each day of week in total date range
             do
             {
 
                 key = new DateTime(keyTicks);
-                allEntriesDictionary.Add(key, 0);
+                allEntriesDictionary.Add(key, new List<int>());
+                //allEntriesDictionary.Add(key, 0);
 
-                while (entries[entryPtr++].dateTime.Ticks < (keyTicks + windowTicks))
+                while (globallyFilteredEntries[entryPtr++].dateTime.Ticks < (keyTicks + windowTicks))
                 {
-                    allEntriesDictionary[key]++;
-                    if (entryPtr == entries.Count)
+                    allEntriesDictionary[key].Add(globallyFilteredEntries[entryPtr++].KeyholderID);
+                    //allEntriesDictionary[key]++;
+                    if (entryPtr == globallyFilteredEntries.Count)
                         break;
                 }
                 keyTicks += windowTicks;
 
-            } while ((keyTicks <= endingTicks) && (entryPtr < entries.Count));
+            } while ((keyTicks <= endingTicks) && (entryPtr < globallyFilteredEntries.Count));
 
             entriesAllDS.Clear();
-            var keys = allEntriesDictionary.Keys.ToList();
-            var values = allEntriesDictionary.Values.ToList();
-            entriesAllDS.Append(allEntriesDictionary.Keys, allEntriesDictionary.Values);
+            if ((bool)chkAllEntriesUnique.IsChecked)
+            {
+                foreach (var periodEntries in allEntriesDictionary)
+                {
+                    entriesAllDS.Append(periodEntries.Key, periodEntries.Value.Distinct().Count());
+                }
+            }
+            else
+            {
+                foreach (var periodEntries in allEntriesDictionary)
+                {
+                    entriesAllDS.Append(periodEntries.Key, periodEntries.Value.Count());
+                }
+            }
+            //var keys = allEntriesDictionary.Keys.ToList();
+            //var values = allEntriesDictionary.Values.ToList();
+            //entriesAllDS.Append(allEntriesDictionary.Keys, allEntriesDictionary.Values);
         }
 
         #endregion
@@ -315,51 +332,88 @@ namespace StanleyReports
         private void DisplayEntriesByDay(object sender, RoutedEventArgs e)
         {
             if (!isLoaded) return;
-            if (entries.Count == 0)
+            if (globallyFilteredEntries.Count == 0)
             {
                 entriesByDayDS.Clear();
                 return;
             }
 
-            TimeSpan window = GetBinTimeSpan(entriesByDayWindow);
+            //TimeSpan window = GetBinTimeSpan(entriesByDayWindow);
+            Dictionary<DateTime, Dictionary<TimeSpan, List<int>>> allDayGroups = new Dictionary<DateTime, Dictionary<TimeSpan, List<int>>>();
 
-            var groupedInDay =
-                            (from entry in entries
-                            let percentile = GetTimeSpanForDay(entry, window.Ticks)
-                            group new { entry.KeyholderID } by percentile into timeSpanGroup
-                            orderby timeSpanGroup.Key
-                            select new { Name = timeSpanGroup.Key, Data = timeSpanGroup.Count() })
-                            .ToDictionary(z => z.Name, z => z.Data);
+            long windowTicks = GetBinTimeSpan(entriesByDayWindow).Ticks;
+            DateTime dateKey;
 
-            // Create a dictionary that has all time windows as keys and count or zero as value
-            Dictionary < TimeSpan, int> entryGroups = new Dictionary<TimeSpan, int>();
-            Int64 keyAsTicks = 0;
-            TimeSpan key;
-            bool showAverage = (bool)entriesByDayShowAverage.IsChecked;
-            int numberOfDays = (entries.Last().dateTime.Date - entries.First().dateTime.Date).Days + 1;
-            do
+            // Then add the ID for each entry falling in a bin
+            foreach (var entry in globallyFilteredEntries)
             {
-                key = new TimeSpan(keyAsTicks);
-                if (groupedInDay.ContainsKey(key))
+                dateKey = entry.dateTime.Date;
+                if (!allDayGroups.ContainsKey(dateKey))
                 {
-                    if (showAverage)
-                        entryGroups.Add(key, groupedInDay[key] / numberOfDays);
-                    else
-                        entryGroups.Add(key, groupedInDay[key]);
+                    allDayGroups.Add(dateKey, CreateDayGroup(windowTicks));
                 }
-                else
-                {
-                    entryGroups.Add(key, 0);
-                }
+                allDayGroups[dateKey][GetTimeSpanForDay(entry, windowTicks)].Add(entry.KeyholderID);
+            }
 
-                keyAsTicks += window.Ticks;
-            } while (keyAsTicks < TimeSpan.TicksPerDay);
+            // Sum up all days
+            bool unique = (bool)chkEntriesByDayUnique.IsChecked;
+            Dictionary<TimeSpan, int> groupedInDay = new Dictionary<TimeSpan, int>();
+            int i = 0;
+            while (i * windowTicks < TimeSpan.TicksPerDay)
+            {
+                groupedInDay.Add(new TimeSpan(i++ * windowTicks), 0);
+            } 
+
+            foreach (var dayGroupKey in allDayGroups.Keys)
+            {
+                foreach (var binGroup in allDayGroups[dayGroupKey])
+                {
+                    if (unique)
+                    {
+                        groupedInDay[binGroup.Key] += binGroup.Value.Distinct().Count();
+                    }
+                    else
+                    {
+                        groupedInDay[binGroup.Key] += binGroup.Value.Count();
+                    }
+                }
+            }
+
+            // Set chart x/y values
+            int scaleFactor;
+
+            if ((bool)entriesByDayShowAverage.IsChecked)
+            {
+                scaleFactor = (globallyFilteredEntries.Last().dateTime.Date - globallyFilteredEntries.First().dateTime.Date).Days + 1;
+            }
+            else
+            {
+                scaleFactor = 1;
+            }
 
             entriesByDayDS.Clear();
-            entriesByDayDS.Append(entryGroups.Keys, entryGroups.Values);
+
+            foreach (var grouping in groupedInDay)
+            {
+                entriesByDayDS.Append(grouping.Key, grouping.Value / scaleFactor);
+            }
         }
 
-        private static TimeSpan GetTimeSpanForDay(Entry entry, Int64 windowTicks)
+        private Dictionary<TimeSpan, List<int>> CreateDayGroup(long windowTicks)
+        {
+            Dictionary<TimeSpan, List<int>> result = new Dictionary<TimeSpan, List<int>>();
+            
+            // Add an entry for each time period (a.k.a bin a.k.a. window)
+            int i = 0;
+            while (i * windowTicks < TimeSpan.TicksPerDay)
+            {
+                result.Add(new TimeSpan(i++ * windowTicks), new List<int>());
+            }
+
+            return result;
+        }
+
+        private TimeSpan GetTimeSpanForDay(Entry entry, Int64 windowTicks)
         {
             var entryTicks = entry.dateTime.TimeOfDay.Ticks;
             long bin = entryTicks / windowTicks;
@@ -372,7 +426,7 @@ namespace StanleyReports
         private void DisplayEntriesByWeek(object sender, RoutedEventArgs e)
         {
             if (!isLoaded) return;
-            if (entries.Count == 0)
+            if (globallyFilteredEntries.Count == 0)
             {
                 entriesByWeekDS.Clear();
                 return;
@@ -381,7 +435,7 @@ namespace StanleyReports
             TimeSpan window = GetBinTimeSpan(entriesByWeekWindow);
 
             var groupedInWeek =
-                            (from entry in entries
+                            (from entry in globallyFilteredEntries
                              let groupKey = GetTimeSpanForWeek(entry, window.Ticks)
                              group new { entry.KeyholderID } by groupKey into timeSpanGroup
                              orderby timeSpanGroup.Key
@@ -454,7 +508,7 @@ namespace StanleyReports
         {
             if (!isLoaded) return;
 
-            if (entries.Count == 0)
+            if (globallyFilteredEntries.Count == 0)
             {
                 entriesByMonthDS.Clear();
                 return;
@@ -463,7 +517,7 @@ namespace StanleyReports
             TimeSpan window = GetBinTimeSpan(entriesByMonthWindow);
 
             var groupedInMonth =
-                            (from entry in entries
+                            (from entry in globallyFilteredEntries
                              let percentile = GetTimeSpanForMonth(entry, window.Ticks)
                              group new { entry.KeyholderID } by percentile into timeSpanGroup
                              orderby timeSpanGroup.Key
@@ -535,7 +589,7 @@ namespace StanleyReports
         {
             if (!isLoaded) return;
 
-            if (entries.Count == 0)
+            if (globallyFilteredEntries.Count == 0)
             {
                 distributionDS.Clear();
                 return;
@@ -545,7 +599,7 @@ namespace StanleyReports
             Dictionary<int, int> freqDist = new Dictionary<int, int>();
 
             var groupedUsers =
-                from entry in entries
+                from entry in globallyFilteredEntries
                 group entry by entry.KeyholderID into userGroup
                 orderby userGroup.Count()
                 select userGroup;
@@ -717,7 +771,7 @@ namespace StanleyReports
             dataStartDate = (DateTime)startDate.SelectedDate;
             dataEndDate = (DateTime)endDate.SelectedDate;
 
-            entries = ApplyGlobalFilters(allEntries);
+            globallyFilteredEntries = ApplyGlobalFilters(allEntries);
 
             switch (ReportsTabControl.SelectedIndex)
             {
