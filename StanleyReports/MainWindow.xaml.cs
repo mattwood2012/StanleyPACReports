@@ -1,6 +1,7 @@
 ﻿using Abt.Controls.SciChart.Model.DataSeries;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -338,7 +339,6 @@ namespace StanleyReports
                 return;
             }
 
-            //TimeSpan window = GetBinTimeSpan(entriesByDayWindow);
             Dictionary<DateTime, Dictionary<TimeSpan, List<int>>> allDayGroups = new Dictionary<DateTime, Dictionary<TimeSpan, List<int>>>();
 
             long windowTicks = GetBinTimeSpan(entriesByDayWindow).Ticks;
@@ -380,15 +380,11 @@ namespace StanleyReports
             }
 
             // Set chart x/y values
-            int scaleFactor;
+            int scaleFactor = 1;
 
             if ((bool)entriesByDayShowAverage.IsChecked)
             {
-                scaleFactor = (globallyFilteredEntries.Last().dateTime.Date - globallyFilteredEntries.First().dateTime.Date).Days + 1;
-            }
-            else
-            {
-                scaleFactor = 1;
+                scaleFactor = allDayGroups.Count;
             }
 
             entriesByDayDS.Clear();
@@ -432,69 +428,97 @@ namespace StanleyReports
                 return;
             }
 
-            TimeSpan window = GetBinTimeSpan(entriesByWeekWindow);
+            // Dictionary with each entry holding a weeks worth of data
+            Dictionary<string, Dictionary<TimeSpan, List<int>>> allWeekGroups = new Dictionary<string, Dictionary<TimeSpan, List<int>>>();
+            long windowTicks = GetBinTimeSpan(entriesByWeekWindow).Ticks;
 
-            var groupedInWeek =
-                            (from entry in globallyFilteredEntries
-                             let groupKey = GetTimeSpanForWeek(entry, window.Ticks)
-                             group new { entry.KeyholderID } by groupKey into timeSpanGroup
-                             orderby timeSpanGroup.Key
-                             select new { Name = timeSpanGroup.Key, Data = timeSpanGroup.Count() })
-                            .ToDictionary(z => z.Name, z => z.Data);
+            DateTimeFormatInfo dfi = DateTimeFormatInfo.CurrentInfo;
+            System.Globalization.Calendar cal = dfi.Calendar;
+            string weekGroupsKey;
 
-            // Create a dictionary that has all time windows as keys and count or zero as value
-            Dictionary<DateTime, int> entryGroups = new Dictionary<DateTime, int>();
-            Int64 keyAsTicks = 0;
-            TimeSpan groupedInWeekKey;
-            DateTime key;
-            bool showAverage = (bool)entriesByWeekShowAverage.IsChecked;
+            foreach (var entry in globallyFilteredEntries)
+            {
+                weekGroupsKey = entry.dateTime.Year.ToString() + "-" + cal.GetWeekOfYear(entry.dateTime, dfi.CalendarWeekRule, dfi.FirstDayOfWeek).ToString();
+                if (!allWeekGroups.ContainsKey(weekGroupsKey))
+                {
+                    allWeekGroups.Add(weekGroupsKey, CreateWeekGroup(windowTicks));
+                }
+
+                allWeekGroups[weekGroupsKey][GetTimeSpanForWeek(entry, windowTicks)].Add(entry.KeyholderID);
+            }
+
+            // Sum up all weeks
+            bool unique = (bool)chkEntriesByWeekUnique.IsChecked;
+            Dictionary<TimeSpan, int> groupedInWeek = new Dictionary<TimeSpan, int>();
+            int i = 0;
+            while (i * windowTicks < 7 * TimeSpan.TicksPerDay)
+            {
+                groupedInWeek.Add(new TimeSpan(i++ * windowTicks), 0);
+            }
+
+            foreach (var weekGroupKey in allWeekGroups.Keys)
+            {
+                foreach (var binGroup in allWeekGroups[weekGroupKey])
+                {
+                    if (unique)
+                    {
+                        groupedInWeek[binGroup.Key] += binGroup.Value.Distinct().Count();
+                    }
+                    else
+                    {
+                        groupedInWeek[binGroup.Key] += binGroup.Value.Count();
+                    }
+                }
+            }
+
+            // Set chart x/y values
             int[] dayOfWeekCount = new int[7];
             int count = 0;
-            int value;
             DateTime startingDate = (DateTime)startDate.SelectedDate;
             DateTime endingDate = (DateTime)endDate.SelectedDate;
 
             // Correct for DateTime.MinValue being a Sunday so when TimeSpan key is converted back to date the correct day of week is displayed
-            long dayOfWeekOffset = 6 * TimeSpan.TicksPerDay; 
+            long dayOfWeekOffset = 6 * TimeSpan.TicksPerDay;
 
+            if ((bool)entriesByWeekShowAverage.IsChecked)
             // Calculate a count for each day of week in total date range
-            do
             {
-                dayOfWeekCount[(int)((startingDate.AddDays(count)).DayOfWeek)]++;
-            } while (startingDate.AddDays(++count) <= endingDate.Date);
+                do
+                {
+                    dayOfWeekCount[(int)((startingDate.AddDays(count)).DayOfWeek)]++;
+                } while (startingDate.AddDays(++count) <= endingDate.Date);
+            }
 
-            if (showAverage)
-                for (int i = 0; i < 7; i++) System.Diagnostics.Debug.WriteLine((DayOfWeek)i + " " + dayOfWeekCount[i]);
-            else
-                System.Diagnostics.Debug.WriteLine("Showing Totals");
-
-            do
+            for (int d = 0; d < dayOfWeekCount.Length; d++)
             {
-                groupedInWeekKey = new TimeSpan(keyAsTicks);
-                key = new DateTime(groupedInWeekKey.Ticks + dayOfWeekOffset);
-                if (groupedInWeek.ContainsKey(groupedInWeekKey))
-                {
-                    if (showAverage)
-                    {
-                        value = (dayOfWeekCount[(int)key.DayOfWeek] == 0) ? 0 : groupedInWeek[groupedInWeekKey] / dayOfWeekCount[(int)key.DayOfWeek];
-                        entryGroups.Add(key, value);
-                    }
-                    else
-                        entryGroups.Add(key, groupedInWeek[groupedInWeekKey]);
-                }
-                else
-                {
-                    entryGroups.Add(key, 0);
-                }
-
-                keyAsTicks += window.Ticks;
-            } while (keyAsTicks < TimeSpan.TicksPerDay * 7);
+                if (dayOfWeekCount[d] == 0) dayOfWeekCount[d]++;
+            }
 
             entriesByWeekDS.Clear();
-            entriesByWeekDS.Append(entryGroups.Keys, entryGroups.Values);
+            DateTime key;
+
+            foreach (var grouping in groupedInWeek)
+            {
+                key = new DateTime(grouping.Key.Ticks + dayOfWeekOffset);
+                entriesByWeekDS.Append(new DateTime(grouping.Key.Ticks), grouping.Value / dayOfWeekCount[(int)key.DayOfWeek]);
+            }
         }
 
-        private static TimeSpan GetTimeSpanForWeek(Entry entry, Int64 windowTicks)
+        private Dictionary<TimeSpan, List<int>> CreateWeekGroup(long windowTicks)
+            {
+                Dictionary<TimeSpan, List<int>> result = new Dictionary<TimeSpan, List<int>>();
+
+                // Add an entry for each time period (a.k.a bin a.k.a. window)
+                int i = 0;
+                while (i * windowTicks < 7 * TimeSpan.TicksPerDay)
+                {
+                    result.Add(new TimeSpan(i++ * windowTicks), new List<int>());
+                }
+
+                return result;
+            }
+
+        private TimeSpan GetTimeSpanForWeek(Entry entry, Int64 windowTicks)
         {
             var entryTicks = ((int)entry.dateTime.DayOfWeek) * TimeSpan.TicksPerDay + entry.dateTime.TimeOfDay.Ticks;
             long bin = entryTicks / windowTicks;
@@ -513,68 +537,97 @@ namespace StanleyReports
                 entriesByMonthDS.Clear();
                 return;
             }
+            // Dictionary with each entry holding a weeks worth of data
+            Dictionary<string, Dictionary<TimeSpan, List<int>>> allMonthGroups = new Dictionary<string, Dictionary<TimeSpan, List<int>>>();
+            long windowTicks = GetBinTimeSpan(entriesByMonthWindow).Ticks;
 
-            TimeSpan window = GetBinTimeSpan(entriesByMonthWindow);
+            //DateTimeFormatInfo dfi = DateTimeFormatInfo.CurrentInfo;
+            //System.Globalization.Calendar cal = dfi.Calendar;
+            string monthGroupsKey;
 
-            var groupedInMonth =
-                            (from entry in globallyFilteredEntries
-                             let percentile = GetTimeSpanForMonth(entry, window.Ticks)
-                             group new { entry.KeyholderID } by percentile into timeSpanGroup
-                             orderby timeSpanGroup.Key
-                             select new { Name = timeSpanGroup.Key, Data = timeSpanGroup.Count() })
-                            .ToDictionary(z => z.Name, z => z.Data);
-
-            // Create a dictionary that has all time windows as keys and count or zero as value
-            Dictionary<DateTime, int> entryGroups = new Dictionary<DateTime, int>();
-            Int64 keyAsTicks = 0;
-            TimeSpan groupedInMonthKey;
-            DateTime key;
-            bool showAverage = (bool)entriesByMonthShowAverage.IsChecked;
-            int[] dayOfMonthCount = new int[32];
-            int count = 0;
-            int value;
-            //TimeSpan oneDay = new TimeSpan(1, 0, 0, 0);
-
-            // Calculate a count for each day of month in total date range
-            DateTime startingDate = (DateTime)startDate.SelectedDate;
-            DateTime endingDate = (DateTime)endDate.SelectedDate;
-            do
+            foreach (var entry in globallyFilteredEntries)
             {
-                dayOfMonthCount[(int)((startingDate.AddDays(count)).Day)]++;
-            } while (startingDate.AddDays(++count) <= endingDate.Date);
-
-            if (showAverage)
-                for (int i = 1; i < 32; i++) System.Diagnostics.Debug.WriteLine(i + " " + dayOfMonthCount[i]);
-            else
-                System.Diagnostics.Debug.WriteLine("Showing Totals");
-
-            do
-            {
-                groupedInMonthKey = new TimeSpan(keyAsTicks + TimeSpan.TicksPerDay);
-                key = new DateTime(keyAsTicks);
-                if (groupedInMonth.ContainsKey(groupedInMonthKey))
+                monthGroupsKey = entry.dateTime.Year.ToString() + "-" + entry.dateTime.Month.ToString();
+                if (!allMonthGroups.ContainsKey(monthGroupsKey))
                 {
-                    if (showAverage)
+                    allMonthGroups.Add(monthGroupsKey, CreateMonthGroup(windowTicks));
+                }
+
+                allMonthGroups[monthGroupsKey][GetTimeSpanForMonth(entry, windowTicks)].Add(entry.KeyholderID);
+            }
+
+            // Sum up all weeks
+            bool unique = (bool)chkEntriesByMonthUnique.IsChecked;
+            Dictionary<TimeSpan, int> groupedInMonth = new Dictionary<TimeSpan, int>();
+            int i = 0;
+            while (i * windowTicks < 32 * TimeSpan.TicksPerDay)
+            {
+                groupedInMonth.Add(new TimeSpan(i++ * windowTicks), 0);
+            }
+
+            foreach (var monthGroupKey in allMonthGroups.Keys)
+            {
+                foreach (var binGroup in allMonthGroups[monthGroupKey])
+                {
+                    if (unique)
                     {
-                        value = (dayOfMonthCount[(int)key.Day] == 0) ? 0 : groupedInMonth[groupedInMonthKey] / dayOfMonthCount[(int)key.Day];
-                        entryGroups.Add(key, value);
+                        groupedInMonth[binGroup.Key] += binGroup.Value.Distinct().Count();
                     }
                     else
-                        entryGroups.Add(key, groupedInMonth[groupedInMonthKey]);
+                    {
+                        groupedInMonth[binGroup.Key] += binGroup.Value.Count();
+                    }
                 }
-                else
-                {
-                    entryGroups.Add(key, 0);
-                }
+            }
 
-                keyAsTicks += window.Ticks;
-            } while (keyAsTicks < TimeSpan.TicksPerDay * 32);
+            // Set chart x/y values
+            int[] dayOfMonthCount = new int[32];
+            int count = 0;
+            bool showAverage = (bool)entriesByMonthShowAverage.IsChecked;
+
+            // Calculate a count for each day of month in total date range
+            if (showAverage)
+            {
+                DateTime startingDate = (DateTime)startDate.SelectedDate;
+                DateTime endingDate = (DateTime)endDate.SelectedDate;
+                do
+                {
+                    dayOfMonthCount[(int)((startingDate.AddDays(count)).Day) - 1]++;
+                } while (startingDate.AddDays(++count) <= endingDate.Date);
+            }
+
+            for (int d = 0; d < dayOfMonthCount.Length; d++)
+            {
+                if (dayOfMonthCount[d] == 0) dayOfMonthCount[d]++;
+            }
 
             entriesByMonthDS.Clear();
-            entriesByMonthDS.Append(entryGroups.Keys, entryGroups.Values);
+            DateTime key;
+            foreach (var grouping in groupedInMonth)
+            {
+                if (grouping.Key.Ticks >= TimeSpan.TicksPerDay)
+                {
+                    key = new DateTime(grouping.Key.Ticks - TimeSpan.TicksPerDay);
+                    entriesByMonthDS.Append(key, grouping.Value / dayOfMonthCount[(int)key.Day - 1]);
+                }
+            }
         }
 
-        private static TimeSpan GetTimeSpanForMonth(Entry entry, Int64 windowTicks)
+        private Dictionary<TimeSpan, List<int>> CreateMonthGroup(long windowTicks)
+        {
+            Dictionary<TimeSpan, List<int>> result = new Dictionary<TimeSpan, List<int>>();
+
+            // Add an entry for each time period (a.k.a bin a.k.a. window)
+            int i = 0;
+            while (i * windowTicks < 32 * TimeSpan.TicksPerDay)
+            {
+                result.Add(new TimeSpan(i++ * windowTicks), new List<int>());
+            }
+
+            return result;
+        }
+
+        private TimeSpan GetTimeSpanForMonth(Entry entry, Int64 windowTicks)
         {
             var entryTicks = ((int)entry.dateTime.Day) * TimeSpan.TicksPerDay + entry.dateTime.TimeOfDay.Ticks;
             long bin = entryTicks / windowTicks;

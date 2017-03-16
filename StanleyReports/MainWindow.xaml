@@ -305,6 +305,7 @@
                                 <ComboBoxItem>8 Hours</ComboBoxItem>
                                 <ComboBoxItem>24 Hours</ComboBoxItem>
                             </ComboBox>
+                            <CheckBox Name="chkEntriesByWeekUnique" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByWeek" ToolTip="Unique means only count one entry regardless of how many entries a person makes in each 'Grouping Size' window">Unique</CheckBox>
                             <CheckBox Name="entriesByWeekShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByWeek">Average</CheckBox>
                         </StackPanel>
                     </Expander>
@@ -360,6 +361,7 @@
                                 <ComboBoxItem>8 Hours</ComboBoxItem>
                                 <ComboBoxItem>24 Hours</ComboBoxItem>
                             </ComboBox>
+                            <CheckBox Name="chkEntriesByMonthUnique" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByMonth" ToolTip="Unique means only count one entry regardless of how many entries a person makes in each 'Grouping Size' window">Unique</CheckBox>
                             <CheckBox Name="entriesByMonthShowAverage" Margin="10,14,10,10" IsThreeState="False" Click="DisplayEntriesByMonth">Average</CheckBox>
                         </StackPanel>
                     </Expander>
