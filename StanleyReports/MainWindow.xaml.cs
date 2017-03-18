@@ -1,9 +1,12 @@
 ﻿using Abt.Controls.SciChart.Model.DataSeries;
+using Abt.Controls.SciChart.Visuals;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -296,7 +299,8 @@ namespace StanleyReports
                 allEntriesDictionary.Add(key, new List<int>());
                 //allEntriesDictionary.Add(key, 0);
 
-                while (globallyFilteredEntries[entryPtr++].dateTime.Ticks < (keyTicks + windowTicks))
+                while ((globallyFilteredEntries[entryPtr++].dateTime.Ticks < (keyTicks + windowTicks))
+                    && (entryPtr < globallyFilteredEntries.Count))
                 {
                     allEntriesDictionary[key].Add(globallyFilteredEntries[entryPtr++].KeyholderID);
                     //allEntriesDictionary[key]++;
@@ -354,6 +358,12 @@ namespace StanleyReports
                 }
                 allDayGroups[dateKey][GetTimeSpanForDay(entry, windowTicks)].Add(entry.KeyholderID);
             }
+
+            // Exclude first and/or last week if requested
+            if ((bool)chkEntriesByDayExcludeLast.IsChecked)
+                allDayGroups.Remove(allDayGroups.Last().Key);
+            if ((bool)chkEntriesByDayExcludeFirst.IsChecked)
+                allDayGroups.Remove(allDayGroups.First().Key);
 
             // Sum up all days
             bool unique = (bool)chkEntriesByDayUnique.IsChecked;
@@ -447,6 +457,12 @@ namespace StanleyReports
                 allWeekGroups[weekGroupsKey][GetTimeSpanForWeek(entry, windowTicks)].Add(entry.KeyholderID);
             }
 
+            // Exclude first and/or last week if requested
+            if ((bool)chkEntriesByWeekExcludeLast.IsChecked)
+                allWeekGroups.Remove(allWeekGroups.Last().Key);
+            if ((bool)chkEntriesByWeekExcludeFirst.IsChecked)
+                allWeekGroups.Remove(allWeekGroups.First().Key);
+
             // Sum up all weeks
             bool unique = (bool)chkEntriesByWeekUnique.IsChecked;
             Dictionary<TimeSpan, int> groupedInWeek = new Dictionary<TimeSpan, int>();
@@ -537,12 +553,10 @@ namespace StanleyReports
                 entriesByMonthDS.Clear();
                 return;
             }
-            // Dictionary with each entry holding a weeks worth of data
+            // Dictionary with each entry holding a months worth of data
             Dictionary<string, Dictionary<TimeSpan, List<int>>> allMonthGroups = new Dictionary<string, Dictionary<TimeSpan, List<int>>>();
             long windowTicks = GetBinTimeSpan(entriesByMonthWindow).Ticks;
 
-            //DateTimeFormatInfo dfi = DateTimeFormatInfo.CurrentInfo;
-            //System.Globalization.Calendar cal = dfi.Calendar;
             string monthGroupsKey;
 
             foreach (var entry in globallyFilteredEntries)
@@ -556,7 +570,13 @@ namespace StanleyReports
                 allMonthGroups[monthGroupsKey][GetTimeSpanForMonth(entry, windowTicks)].Add(entry.KeyholderID);
             }
 
-            // Sum up all weeks
+            // Exclude first and/or last month if requested
+            if ((bool)chkEntriesByMonthExcludeLast.IsChecked)
+                allMonthGroups.Remove(allMonthGroups.Last().Key);
+            if ((bool)chkEntriesByMonthExcludeFirst.IsChecked)
+                allMonthGroups.Remove(allMonthGroups.First().Key);
+
+            // Sum up all months
             bool unique = (bool)chkEntriesByMonthUnique.IsChecked;
             Dictionary<TimeSpan, int> groupedInMonth = new Dictionary<TimeSpan, int>();
             int i = 0;
@@ -717,6 +737,10 @@ namespace StanleyReports
         {
             DataContext = this;
 
+            AssemblyName assemName = Assembly.GetEntryAssembly().GetName();
+            Version ver = assemName.Version;
+            Title = assemName.Name + " V" + ver.ToString().Substring(0,ver.ToString().Length - 2);
+
             // Global
             startDate.DisplayDateStart = dataStartDate;
             startDate.DisplayDateEnd = dataEndDate;
@@ -816,6 +840,62 @@ namespace StanleyReports
         #endregion
 
         #region Code behind - I know, make it binding - will do once features have been defined
+
+        private void SaveChart(object sender, RoutedEventArgs e)
+        {
+            SciChartSurface surface = null;
+            string defaultName = "";
+
+            switch (ReportsTabControl.SelectedIndex)
+            {
+                case 1:
+                    surface = entriesAll;
+                    defaultName = String.Format("All Entries {0:MM-dd-yyyy}", DateTime.Now);
+                    break;
+                case 2:
+                    surface = entriesByDayChart;
+                    defaultName = String.Format("Entries by Day {0:MM-dd-yyyy}", DateTime.Now);
+                    break;
+                case 3:
+                    surface = entriesByWeekChart;
+                    defaultName = String.Format("Entries by Week {0:MM-dd-yyyy}", DateTime.Now);
+                    break;
+                case 4:
+                    surface = entriesByMonthChart;
+                    defaultName = String.Format("Entries by Month {0:MM-dd-yyyy}", DateTime.Now);
+                    break;
+                case 5:
+                    surface = entryDistributionChart;
+                    defaultName = String.Format("Entries Distribution {0:MM-dd-yyyy}", DateTime.Now);
+                    break;
+            }
+
+            if (surface == null)
+                return;
+
+            var saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Png|*.png|Jpeg|*.jpeg|Bmp|*.bmp",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                FileName = defaultName
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+
+                var exportType = (ExportType)saveFileDialog.FilterIndex - 1;
+
+                // Saving chart to file with specified file format
+                try
+                {
+                    surface.ExportToFile(saveFileDialog.FileName, exportType);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error saving chart image: " + ex.Message);
+                }
+            }
+        }
 
         private void GlobalSettingChanged(object sender, SelectionChangedEventArgs e)
         {
